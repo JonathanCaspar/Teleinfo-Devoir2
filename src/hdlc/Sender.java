@@ -3,6 +3,8 @@ package hdlc;
 import java.io.*;
 import static java.lang.System.exit;
 import java.net.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /*
@@ -12,20 +14,99 @@ import java.net.*;
 public class Sender {
     
     private Frame[] sentFrames;
-    private static int max_tries = 3;
+    private final int max_tries = 3;
 
-    // Valeurs par défaut
-    private static String host = "127.0.0.1"; //localhost
-    private static int port = 8080;
-    private static String file_name = null;
-    private static int protocol = 0;
+    private final String host;
+    private final int port;
+    private final String file_name;
+    private final int protocol;
+    
+    private Socket socket;
+    private DataOutputStream dOut;
+
+    public Sender() {
+        this.host = "127.0.0.1"; //localhost
+        this.port = 8080;
+        this.file_name = null;
+        this.protocol = 0;
+    }
+
+    public Sender(String host, int port, String file_name, int protocol) {
+        this.host = host;
+        this.port = port;
+        this.file_name = file_name;
+        this.protocol = protocol;
+    }    
     
     
-    // Vérifie si les argumeargs.lengthnts passés en paramètres sont valides
+    
+    // Vérifie si les arguments args.lengthnts passés en paramètres sont valides (A COMPLETER)
     public static boolean validateArgs(String[] args){
         if(args.length > 4) return false;
         // reste autre arguments
         return true;
+    }
+    
+    // Envoie des données (String) via un socket fourni en paramètre
+    public void sendData(String data){
+        if(data != null && this.socket != null && this.socket.isConnected()) {
+            
+            try {
+                this.dOut.writeUTF(data);
+                this.dOut.flush(); // On envoie
+                
+                
+            } catch (IOException ex) {
+                Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+    
+    public boolean connect(){
+        // Tente de se connecter plusieurs fois jusqu'à ce que le serveur soit lancé
+        int try_attempt = 0;
+        this.socket = new Socket();
+        
+        while(try_attempt <= this.max_tries && !socket.isConnected()){
+            try {
+                SocketAddress sockaddr = new InetSocketAddress(this.host, this.port);
+                this.socket = new Socket();
+                
+                // Connects this socket to the server with a specified timeout value
+                // If timeout occurs, SocketTimeoutException is thrown
+                this.socket.connect(sockaddr);
+
+                System.out.println("Socket connected..." + this.socket);
+                this.dOut = new DataOutputStream(this.socket.getOutputStream());
+                return true;
+            }
+            catch (Exception e) {
+                
+                if(try_attempt == this.max_tries){
+                    System.out.println("Server was not found. Ending the program.");
+                    return false;
+                }
+                else{
+                    System.out.println("Attempt #" + (try_attempt+1) + " : I/O Error " + e.getMessage() + ". Trying again ...");
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    try_attempt++;
+                }
+            }
+        }
+        return false;
+    }
+    
+    public void disconnect(){
+        try {
+            this.dOut.close();
+            this.socket.close();
+        } catch (IOException ex) {
+            Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
 
@@ -36,63 +117,21 @@ public class Sender {
             System.out.println("Les arguments fournis n'ont pas le format valide ('<Nom_Machine> <Numero_Port> <Nom_fichier> <0>')");
             exit(0);
         }
-        
-        host = args[0];
-        port = Integer.parseInt(args[1]);
-        file_name = args[2];
-        protocol = Integer.parseInt(args[3]);
-        
-        // Tente de se connecter plusieurs fois jusqu'à ce que le serveur soit lancé
-        int try_attempt = 0;
-        Socket socket = new Socket();
-        
-        while(try_attempt <= max_tries && !socket.isConnected()){
-            try {
-                SocketAddress sockaddr = new InetSocketAddress(host, port);
-                socket = new Socket();
+        else{
+            Sender sender = new Sender(args[0], Integer.parseInt(args[1]), args[2], Integer.parseInt(args[3]));
+       
+            // Si la connection a fonctionné : on peut envoyer des données
+            if(sender.connect()){
+                sender.sendData("Essaie 1");
+                sender.sendData("I'm using the class DataInputStream to read from a Socket");
+                sender.sendData("Essaie 1");
+                sender.sendData("Essaie 1");
+                sender.sendData("Essaie 1");
+                sender.sendData("Essaie 1");
                 
-                // Connects this socket to the server with a specified timeout value
-                // If timeout occurs, SocketTimeoutException is thrown
-                socket.connect(sockaddr);
 
-                System.out.println("Socket connected..." + socket);
-
-            }
-            catch (Exception e) {
-                
-                if(try_attempt == max_tries){
-                    System.out.println("Server was not found. Ending the program.");
-                    return;
-                }
-                else{
-                    System.out.println("Attempt #" + (try_attempt+1) + " : I/O Error " + e.getMessage() + ". Trying again ...");
-                    Thread.sleep(500);
-                    try_attempt++;
-                }
+                sender.disconnect();
             }
         }
-        
-        // Si la connection a fonctionné : on peut envoyer des données
-        if(socket.isConnected()){
-            BufferedReader plec = new BufferedReader(
-                                   new InputStreamReader(socket.getInputStream())
-                                   );
-
-            PrintWriter pred = new PrintWriter(
-                                 new BufferedWriter(
-                                    new OutputStreamWriter(socket.getOutputStream())),
-                                 true);
-
-            String str = "bonjour";
-            for (int i = 0; i < 10; i++) {
-               pred.println(str);          // envoi d'un message
-               str = plec.readLine();      // lecture de l'écho
-            }
-            System.out.println("END");     // message de terminaison
-            pred.println("END") ;
-            plec.close();
-            pred.close();
-            socket.close();
-        }
-   }
+    }
 }

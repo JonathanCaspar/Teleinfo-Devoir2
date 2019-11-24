@@ -9,7 +9,7 @@ package hdlc;
  *
  * @author Jonathan
  */
-public enum typeEnum {
+public enum FrameType {
     I,
     C,
     A,
