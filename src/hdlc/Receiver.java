@@ -5,6 +5,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 
 public class Receiver {
     
@@ -75,7 +78,129 @@ public class Receiver {
             Logger.getLogger(Receiver.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+
+    public static void checkSum( int[] data, int[] checksum){
+
+		int[] result = Arrays.copyOfRange(data, 0, checksum.length);
+        System.out.println("First");
+                for(int k = 0; k < result.length; k++){
+                    System.out.println(result[k]);
+                }
+    	for (int i = 0; i < (data.length - checksum.length); i++){	
+
+	    	if(result[0] == 1){
+	    		for (int j = 1; j < checksum.length; j++){
+	    			result[j-1] = (result[j] ^ checksum[j]);
+	    		}
+	    		result[result.length-1] = data[i+checksum.length];
+
+                System.out.println("Suivi");
+                for(int k = 0; k < result.length; k++){
+                    System.out.println(result[k]);
+                }
+	    	}
+            else{
+                for (int j = 1; j < result.length; j++){
+                    result[j-1] = result[j];
+                }
+                result[result.length-1] = data[i+checksum.length];
+
+                System.out.println("Suivi");
+                for(int k = 0; k < result.length; k++){
+                    System.out.println(result[k]);
+                }
+            }
+		}
+
+        if(result[0] == 1){
+            for (int j = 0; j < checksum.length; j++){
+                result[j] = (result[j] ^ checksum[j]);
+            }
+        }     
+
+    System.out.println("Result");
+		for(int k = 0; k < result.length; k++){
+			System.out.println(result[k]);
+		}
+
+		//Vérification
+
+        boolean verif = true;
+        int index = 0;
+
+        while((verif == true) && (index < result.length)){
+
+            if(result[index] != 0){
+                verif = false;
+            }
+            else{
+                index++;
+            }
+        }
+        System.out.println(verif);
+
+    }
+
+    //Tranform un string binaire en un tableau contenant le nombre binaire
+    public static int[] transformStringToBin(String data ){
+
+        int[] dataArray = new int[data.length()];
+
+        for (int i = 0; i < data.length(); i++){
+            if(data.charAt(i) == '1'){
+                dataArray[i] = 1;
+            }
+            else{
+                dataArray[i] = 0;
+            }
+
+        }
+    return (dataArray);
+
+    }
+
+    //Concatène 2 tableau de int ensembl, un à la suite de l'autre
+    public static void concatenateArray(int[] array1, int[] array2){
+
+        int[] bothArray = new int[array1.length + array2.length];
+
+        for(int i = 0; i < array1.length; i++){
+            bothArray[i] = array1[i];
+
+        }
+
+        for(int i = 0; i < array2.length; i++){
+            bothArray[i+ array1.length] = array2[i];
+
+        }
+
+        for(int i = 0; i < bothArray.length; i++){
+            System.out.println(bothArray[i]);
+
+        }
+
+    //Vérifie si le type, le num et le data ont été erronés durant l'envoi
+    public static void verification(FrameType type, int num, string data, string crc ){
+
+    		int[] checksum = {1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1} //x16+x12+x5+1
+
+    		int[] typeArray = transformStringtoBin(Integer.toBinaryString(receivedFrames[].type))
+    		int[] numArray = transformStringtoBin(Integer.toBinaryString(receivedFrames[].type))
+    		int[] crcArray = transformStringtoBin(Integer.toBinaryString(receivedFrames[].crc))
+
+    		concatenateArray(typeArray, crcArray);
+    		concatenateArray(numArray, crcArray);
+    		concatenateArray(receivedFrame[].data, crcArray)
+
+    		checkSum(typeArray+crcArray, checksum )
+
+
+    }
+
+
     
+
+
     public static void main(String[] args) throws Exception {
         Receiver receiver = new Receiver(80);
         
@@ -85,5 +210,19 @@ public class Receiver {
             receiver.disconnectClient();
             receiver.disconnectSocket();
         }
+		
+		byte[] data = {1,0,1,0};
+		for(int i = 0; i < data.length; i++){
+			System.out.println(data[i]);
+		}
+		byte[] checksum = {1,0};
+		for(int i = 0; i < checksum.length; i++){
+			System.out.println(checksum[i]);
+		}
+		checkSum(data, checksum);
+
+	//Verification des erreurs erronés
+
+
    }
 }
