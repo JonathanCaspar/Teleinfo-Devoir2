@@ -1,5 +1,6 @@
 package hdlc;
 
+
 public enum FrameType {
     I,
     C,
