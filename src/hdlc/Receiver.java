@@ -1,6 +1,7 @@
 package hdlc;
 
 import java.io.*;
+import static java.lang.System.exit;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.logging.Level;
@@ -49,12 +50,19 @@ public class Receiver {
             // On crée une Trame à partir de la suite reçue et on lit le type de message
             try {
                 String request = this.dIn.readUTF();
-                Frame frame = Frame.parseFrame(request);
                 System.out.println("Message received: " + request);
-            } catch (EOFException e) {
-
-            } catch (IOException e) {
-
+                
+                Frame frame = Frame.parseFrame(request);
+                System.out.println("Rencoded frame : " + frame.encode()); 
+                System.out.println("Assertion = " + frame.encode().equals(request));
+                System.out.println("Frame extracted: " + frame.toString());
+                
+                done = true;
+            } 
+            catch (EOFException e) {} 
+            catch (IOException e) {}
+            catch (IllegalArgumentException e){
+                System.out.println("Frame string is invalid : " + e.toString());
             }
         }
     }
@@ -134,44 +142,6 @@ public class Receiver {
 
     }
 
-    //Tranform un string binaire en un tableau contenant le nombre binaire
-    public static int[] transformStringToBin(String data) {
-
-        int[] dataArray = new int[data.length()];
-
-        for (int i = 0; i < data.length(); i++) {
-            if (data.charAt(i) == '1') {
-                dataArray[i] = 1;
-            } else {
-                dataArray[i] = 0;
-            }
-
-        }
-        return (dataArray);
-
-    }
-
-    //Concatène 2 tableau de int ensembl, un à la suite de l'autre
-    public static void concatenateArray(int[] array1, int[] array2) {
-
-        int[] bothArray = new int[array1.length + array2.length];
-
-        for (int i = 0; i < array1.length; i++) {
-            bothArray[i] = array1[i];
-
-        }
-
-        for (int i = 0; i < array2.length; i++) {
-            bothArray[i + array1.length] = array2[i];
-
-        }
-
-        for (int i = 0; i < bothArray.length; i++) {
-            System.out.println(bothArray[i]);
-
-        }
-    }
-
     //Vérifie si le type, le num et le data ont été erronés durant l'envoi
     /*public static void verification(FrameType type, int num, String data, String crc) {
 
@@ -189,30 +159,34 @@ public class Receiver {
 
 
     }*/
+    
     public static void main(String[] args) throws Exception {
-        /*Receiver receiver = new Receiver(80);
+        
+        if (false && !Utils.validateReceiverArgs(args)) { // 'false' pour test seulement
+            System.out.println("Les arguments fournis n'ont pas le format valide ('<Numero_Port>')");
+            exit(0);
+        } else {
+            Receiver receiver = new Receiver(Integer.parseInt("82")); //'82' à remplacer par args[0]
 
-        if (receiver.initialize() && receiver.acceptClient()) {
+            if (receiver.initialize() && receiver.acceptClient()) {
 
-            receiver.listenForFrames();
-            receiver.disconnectClient();
-            receiver.disconnectSocket();
-        }*/
-        //                 01111110   00000001   00000001   10101010   1101 0101 1110 1010   01111110
-        String rawFrame = "01111110" + "00000001" + "00000110" + "10101010" + "1101010111101010" + "01111110";
-        System.out.println(Frame.parseFrame(rawFrame).toString());
+                receiver.listenForFrames();
+                receiver.disconnectClient();
+                receiver.disconnectSocket();
+            }
 
-        /*int[] data = {1, 0, 1, 0};
-        for (int i = 0; i < data.length; i++) {
-            System.out.println(data[i]);
+            /*int[] data = {1, 0, 1, 0};
+            for (int i = 0; i < data.length; i++) {
+                System.out.println(data[i]);
+            }
+            int[] checksum = {1, 0};
+            for (int i = 0; i < checksum.length; i++) {
+                System.out.println(checksum[i]);
+            }
+
+            checkSum(data, checksum);
+
+            //Verification des erreurs erronés*/
         }
-        int[] checksum = {1, 0};
-        for (int i = 0; i < checksum.length; i++) {
-            System.out.println(checksum[i]);
-        }
-
-        checkSum(data, checksum);
-
-        //Verification des erreurs erronés*/
     }
 }

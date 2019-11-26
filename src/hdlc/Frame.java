@@ -3,6 +3,8 @@ package hdlc;
 public class Frame {
 
     final private static int numMaxBit = 3;
+    final private static String binaryRegex = "^\\b[01]+\\b$";
+    
     final private String flag = "01111110";
     private FrameType type;
     private int num;
@@ -30,29 +32,23 @@ public class Frame {
     }
 
     // Retourne une chaine de bits (en String) représentant la trame
-    public String encodeFrame() {
-        //  bitStuff( Integer.toBinaryString(FrameType.valueOf("F").ordinal()) )valeur binaire de FrameType
-        return null;
+    public String encode() {
+        String stuffedBinType = Utils.bitStuff( Integer.toBinaryString(this.type.ordinal()), 8); // valeur binaire de FrameType
+        String stuffedBinNum  = Utils.bitStuff( Integer.toBinaryString(this.num), 8);
+        String stuffedBinCrc  = Utils.bitStuff( this.crc, 16);
+        
+        return this.flag + stuffedBinType + stuffedBinNum + this.data + stuffedBinCrc + this.flag;
     }
 
-    // Retourne une chaine à laquelle on a ajouté des 0 (à gauche) jusqu'à obtenir une chaine finale de taille "maxSize"
-    public static String bitStuff(String bits, int maxSize) {
-        if (bits.length() < maxSize) {
-            String stuffedBits = bits;
-            for (int i = 0; i < maxSize - bits.length(); i++) {
-                stuffedBits = "0" + stuffedBits;
-            }
-            return stuffedBits;
-        } else {
-            return bits;
-        }
-    }
+
 
     // Convertit une chaine de bits (en String) en un objet Frame
     public static Frame parseFrame(String rawFrame) {
+        // Vérification
         int frameLength = rawFrame.length();
-        if (frameLength < 49) {
-            throw new IllegalArgumentException("Frame string is too short!"); //taille minimale requise (4 octets + 1 bit data + 2 octets crc)
+        if (!rawFrame.matches(binaryRegex)) throw new IllegalArgumentException("Frame string must be binary numbers ONLY!");
+        if (frameLength < 48) {
+            throw new IllegalArgumentException("Frame string is too short!"); //taille minimale requise (4 octets + 2 octets crc)
         }
         if (!rawFrame.substring(0, 8).equals(rawFrame.substring(frameLength - 8, frameLength))) {
             throw new IllegalArgumentException("Beginning and end flags are not equals!");
@@ -66,7 +62,7 @@ public class Frame {
             // Index du type existe
             type_ = FrameType.values()[typeBinaryNum];
         } else {
-            throw new ArrayIndexOutOfBoundsException("Given type doesn't exist!");
+            throw new IllegalArgumentException("Given type doesn't exist!");
         }
 
         //-- Extraction de Num
