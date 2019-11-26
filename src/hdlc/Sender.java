@@ -63,12 +63,9 @@ public class Sender {
             try {
                 SocketAddress sockaddr = new InetSocketAddress(this.host, this.port);
                 this.socket = new Socket();
-
-                // Connects this socket to the server with a specified timeout value
-                // If timeout occurs, SocketTimeoutException is thrown
                 this.socket.connect(sockaddr);
 
-                System.out.println("Socket connected..." + this.socket);
+                System.out.println("Socket connected : " + this.socket);
                 this.dOut = new DataOutputStream(this.socket.getOutputStream());
                 return true;
             } catch (Exception e) {

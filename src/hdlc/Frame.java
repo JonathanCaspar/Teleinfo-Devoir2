@@ -32,9 +32,12 @@ public class Frame {
     }
 
     // Retourne une chaine de bits (en String) représentant la trame
-    public String encodeFrame() {
-        //  Utils.bitStuff( Integer.toBinaryString(FrameType.valueOf("F").ordinal()) )valeur binaire de FrameType
-        return null;
+    public String encode() {
+        String stuffedBinType = Utils.bitStuff( Integer.toBinaryString(this.type.ordinal()), 8); // valeur binaire de FrameType
+        String stuffedBinNum  = Utils.bitStuff( Integer.toBinaryString(this.num), 8);
+        String stuffedBinCrc  = Utils.bitStuff( this.crc, 16);
+        
+        return this.flag + stuffedBinType + stuffedBinNum + this.data + stuffedBinCrc + this.flag;
     }
 
 

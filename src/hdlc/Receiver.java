@@ -53,7 +53,11 @@ public class Receiver {
                 System.out.println("Message received: " + request);
                 
                 Frame frame = Frame.parseFrame(request);
-                System.out.println("Frame extracted: " + frame.toString());  
+                System.out.println("Rencoded frame : " + frame.encode()); 
+                System.out.println("Assertion = " + frame.encode().equals(request));
+                System.out.println("Frame extracted: " + frame.toString());
+                
+                done = true;
             } 
             catch (EOFException e) {} 
             catch (IOException e) {}
@@ -158,11 +162,11 @@ public class Receiver {
     
     public static void main(String[] args) throws Exception {
         
-        if (!Utils.validateReceiverArgs(args)) { // 'false' pour test seulement
+        if (false && !Utils.validateReceiverArgs(args)) { // 'false' pour test seulement
             System.out.println("Les arguments fournis n'ont pas le format valide ('<Numero_Port>')");
             exit(0);
         } else {
-            Receiver receiver = new Receiver(Integer.parseInt(args[0])); //'80' à remplacer par args[0]
+            Receiver receiver = new Receiver(Integer.parseInt("82")); //'82' à remplacer par args[0]
 
             if (receiver.initialize() && receiver.acceptClient()) {
 
