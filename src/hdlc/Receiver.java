@@ -49,12 +49,15 @@ public class Receiver {
             // On crée une Trame à partir de la suite reçue et on lit le type de message
             try {
                 String request = this.dIn.readUTF();
-                Frame frame = Frame.parseFrame(request);
                 System.out.println("Message received: " + request);
-            } catch (EOFException e) {
-
-            } catch (IOException e) {
-
+                
+                Frame frame = Frame.parseFrame(request);
+                System.out.println("Frame extracted: " + frame.toString());  
+            } 
+            catch (EOFException e) {} 
+            catch (IOException e) {}
+            catch (IllegalArgumentException e){
+                System.out.println("Frame string is invalid : " + e.toString());
             }
         }
     }
@@ -190,17 +193,14 @@ public class Receiver {
 
     }*/
     public static void main(String[] args) throws Exception {
-        /*Receiver receiver = new Receiver(80);
+        Receiver receiver = new Receiver(80);
 
         if (receiver.initialize() && receiver.acceptClient()) {
 
             receiver.listenForFrames();
             receiver.disconnectClient();
             receiver.disconnectSocket();
-        }*/
-        //                 01111110   00000001   00000001   10101010   1101 0101 1110 1010   01111110
-        String rawFrame = "01111110" + "00000001" + "00000110" + "10101010" + "1101010111101010" + "01111110";
-        System.out.println(Frame.parseFrame(rawFrame).toString());
+        }
 
         /*int[] data = {1, 0, 1, 0};
         for (int i = 0; i < data.length; i++) {

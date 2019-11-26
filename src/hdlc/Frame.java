@@ -3,6 +3,8 @@ package hdlc;
 public class Frame {
 
     final private static int numMaxBit = 3;
+    final private static String binaryRegex = "^\\b[01]+\\b$";
+    
     final private String flag = "01111110";
     private FrameType type;
     private int num;
@@ -50,7 +52,9 @@ public class Frame {
 
     // Convertit une chaine de bits (en String) en un objet Frame
     public static Frame parseFrame(String rawFrame) {
+        // Vérification
         int frameLength = rawFrame.length();
+        if (!rawFrame.matches(binaryRegex)) throw new IllegalArgumentException("Frame string must be binary numbers ONLY!");
         if (frameLength < 49) {
             throw new IllegalArgumentException("Frame string is too short!"); //taille minimale requise (4 octets + 1 bit data + 2 octets crc)
         }
@@ -66,7 +70,7 @@ public class Frame {
             // Index du type existe
             type_ = FrameType.values()[typeBinaryNum];
         } else {
-            throw new ArrayIndexOutOfBoundsException("Given type doesn't exist!");
+            throw new IllegalArgumentException("Given type doesn't exist!");
         }
 
         //-- Extraction de Num

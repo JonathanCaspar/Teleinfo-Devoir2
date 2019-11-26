@@ -117,13 +117,10 @@ public class Sender {
 
             // Si la connection a fonctionné : on peut envoyer des données
             if (sender.connect()) {
-                sender.sendData("Essaie 1");
-                sender.sendData("I'm using the class DataInputStream to read from a Socket");
-                sender.sendData("Essaie 1");
-                sender.sendData("Essaie 1");
-                sender.sendData("Essaie 1");
-                sender.sendData("Essaie 1");
-
+                //                 01111110   00000001   00000001   10101010   1101 0101 1110 1010   01111110
+                String rawFrame = "01111110" + "00000001" + "00000110" + "10101010" + "1101010111101010" + "01111110";
+                //System.out.println(Frame.parseFrame(rawFrame).toString());
+                sender.sendData(rawFrame);
                 sender.disconnect();
             }
         }
