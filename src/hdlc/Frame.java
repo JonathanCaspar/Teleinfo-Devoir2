@@ -33,30 +33,19 @@ public class Frame {
 
     // Retourne une chaine de bits (en String) représentant la trame
     public String encodeFrame() {
-        //  bitStuff( Integer.toBinaryString(FrameType.valueOf("F").ordinal()) )valeur binaire de FrameType
+        //  Utils.bitStuff( Integer.toBinaryString(FrameType.valueOf("F").ordinal()) )valeur binaire de FrameType
         return null;
     }
 
-    // Retourne une chaine à laquelle on a ajouté des 0 (à gauche) jusqu'à obtenir une chaine finale de taille "maxSize"
-    public static String bitStuff(String bits, int maxSize) {
-        if (bits.length() < maxSize) {
-            String stuffedBits = bits;
-            for (int i = 0; i < maxSize - bits.length(); i++) {
-                stuffedBits = "0" + stuffedBits;
-            }
-            return stuffedBits;
-        } else {
-            return bits;
-        }
-    }
+
 
     // Convertit une chaine de bits (en String) en un objet Frame
     public static Frame parseFrame(String rawFrame) {
         // Vérification
         int frameLength = rawFrame.length();
         if (!rawFrame.matches(binaryRegex)) throw new IllegalArgumentException("Frame string must be binary numbers ONLY!");
-        if (frameLength < 49) {
-            throw new IllegalArgumentException("Frame string is too short!"); //taille minimale requise (4 octets + 1 bit data + 2 octets crc)
+        if (frameLength < 48) {
+            throw new IllegalArgumentException("Frame string is too short!"); //taille minimale requise (4 octets + 2 octets crc)
         }
         if (!rawFrame.substring(0, 8).equals(rawFrame.substring(frameLength - 8, frameLength))) {
             throw new IllegalArgumentException("Beginning and end flags are not equals!");

@@ -38,14 +38,7 @@ public class Sender {
         this.protocol = protocol;
     }
 
-    // Vérifie si les arguments args.lengthnts passés en paramètres sont valides (A COMPLETER)
-    public static boolean validateArgs(String[] args) {
-        if (args.length > 4) {
-            return false;
-        }
-        // reste autre arguments
-        return true;
-    }
+    
 
     // Envoie des données (String) via un socket fourni en paramètre
     public void sendData(String data) {
@@ -105,11 +98,12 @@ public class Sender {
             Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+    
 
     public static void main(String[] args) throws Exception {
 
         // On fait une validation des arguments
-        if (!validateArgs(args)) {
+        if (!Utils.validateSenderArgs(args)) {
             System.out.println("Les arguments fournis n'ont pas le format valide ('<Nom_Machine> <Numero_Port> <Nom_fichier> <0>')");
             exit(0);
         } else {
@@ -117,8 +111,8 @@ public class Sender {
 
             // Si la connection a fonctionné : on peut envoyer des données
             if (sender.connect()) {
-                //                 01111110   00000001   00000001   10101010   1101 0101 1110 1010   01111110
-                String rawFrame = "01111110" + "00000001" + "00000110" + "10101010" + "1101010111101010" + "01111110";
+                //                 01111110   00000001   00000011   10101010   1101 0101 1110 1010   01111110
+                String rawFrame = "01111110" + "00000001" + "00000011" + "10101010" + "1101010111101010" + "01111110";
                 //System.out.println(Frame.parseFrame(rawFrame).toString());
                 sender.sendData(rawFrame);
                 sender.disconnect();
