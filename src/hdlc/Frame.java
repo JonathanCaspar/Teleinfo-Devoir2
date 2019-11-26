@@ -1,9 +1,10 @@
 package hdlc;
 
+import java.util.Arrays;
+
 public class Frame {
 
     final private static int numMaxBit = 3;
-    final private static String binaryRegex = "^\\b[01]+\\b$";
     
     final private String flag = "01111110";
     private FrameType type;
@@ -46,7 +47,7 @@ public class Frame {
     public static Frame parseFrame(String rawFrame) {
         // Vérification
         int frameLength = rawFrame.length();
-        if (!rawFrame.matches(binaryRegex)) throw new IllegalArgumentException("Frame string must be binary numbers ONLY!");
+        if (!rawFrame.matches(Utils.binaryRegex)) throw new IllegalArgumentException("Frame string must be binary numbers ONLY!");
         if (frameLength < 48) {
             throw new IllegalArgumentException("Frame string is too short!"); //taille minimale requise (4 octets + 2 octets crc)
         }
@@ -117,41 +118,6 @@ public class Frame {
 
     }
 
-//Permet de vérifier s'il y a une erreur dans la trame avec le résultat de la division polynomiale
-    public static boolean verification(int[] result){
-		boolean verif = true;
-        int index = 0;
-
-        while ((verif == true) && (index < result.length)) {
-
-            if (result[index] != 0) {
-                verif = false;
-            } else {
-                index++;
-            }
-        }
-        return (verif);
-
-    }
-
-    //Tranform un string binaire en un tableau contenant le nombre binaire
-    //Retourne un tableau de int contenant les bits
-    public static int[] binStringToArray(String data) {
-
-        int[] dataArray = new int[data.length()];
-
-        for (int i = 0; i < data.length(); i++) {
-            if (data.charAt(i) == '1') {
-                dataArray[i] = 1;
-            } else {
-                dataArray[i] = 0;
-            }
-
-        }
-        return (dataArray);
-
-    }
-
      //Vérifie si le type, le num et le data ont été erronés durant l'envoi
     /*public static void verification(FrameType type, int num, String data, String crc) {
 
@@ -170,54 +136,4 @@ public class Frame {
 
     }*/
 
- //Concatène 2 tableau de int ensembl, un à la suite de l'autre
-    public static int[] concatenate2Array(int[] array1, int[] array2) {
-
-        int[] bothArray = new int[array1.length + array2.length];
-
-        for (int i = 0; i < array1.length; i++) {
-            bothArray[i] = array1[i];
-
-        }
-
-        for (int i = 0; i < array2.length; i++) {
-            bothArray[i + array1.length] = array2[i];
-
-        }
-
-        return (bothArray);
-    }
-
-    //Transforme un string de données en un string binaire
-    public static byte[] transformLatinToBin(String data) {
-
-        Charset iso88591charset = Charset.forName("ISO-8859-1");
-
-        byte[] bytes = data.getBytes(iso88591charset);
-
-        StringBuilder binary = new StringBuilder();
-
-        for (byte b : bytes){
-
-            int val = b;
-            for (int i = 0; i < 8; i++){
-                binary.append((val & 128) == 0 ? 0 : 1);
-                val <<= 1;
-            }
-            binary.append(' ');
-          }
-
-
-        String text = new String(bytes, iso88591charset);
-       
-    return(bytes);
-
-    }
-
-    public static String transformBinToLatin(byte[] bin) throws UnsupportedEncodingException{
-        Charset iso88591charset = Charset.forName("ISO-8859-1");
-
-        String text = new String(bin,iso88591charset);
-        return(text);
-    }
 }
