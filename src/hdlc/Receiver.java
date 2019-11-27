@@ -50,14 +50,41 @@ public class Receiver {
             // On crée une Trame à partir de la suite reçue et on lit le type de message
             try {
                 String request = this.dIn.readUTF();
+                System.out.println("");
                 System.out.println("Message received: " + request);
                 
                 Frame frame = Frame.parseFrame(request);
-                System.out.println("Rencoded frame : " + frame.encode()); 
-                System.out.println("Assertion = " + frame.encode().equals(request));
+                //System.out.println("Re-encoded frame : " + frame.encode()); 
                 System.out.println("Frame extracted: " + frame.toString());
                 
-                done = true;
+                // Adapte la réponse selon le type de paquet recu
+                switch(frame.getType()){
+                    case I :
+                        break;
+                        
+                    case C :
+                        System.out.println("---- RECU UNE DEMANDE DE CONNEXION ! ----");
+                        break;
+                        
+                    case A :
+                        break;
+                        
+                    case R :
+                        break;
+                        
+                    case F :
+                        System.out.println("---- RECU UNE DEMANDE DE FERMETURE DE CONNEXION ! ----");
+                        done = true;
+                        break;
+                        
+                    case P :
+                        break;
+                    
+                    default:
+                        done = true;
+                        break;
+                }
+                
             } 
             catch (EOFException e) {} 
             catch (IOException e) {}
