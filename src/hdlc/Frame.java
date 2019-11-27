@@ -4,14 +4,22 @@ import java.util.Arrays;
 
 public class Frame {
 
-    final private static int numMaxBit = 3;
+    final public static int MAX_SEQ_NUM = 8; // car 3 bits
+    final public static int DATA_MAX_SIZE = 20; // 10 caractères
     
-    final private String flag = "01111110";
+    final private String FLAG = "01111110";
     private FrameType type;
     private int num;
     private String data;
     private String crc;
 
+    public Frame(FrameType type, int num, String data) {
+        this.type = type;
+        this.num = num;
+        this.data = data;
+        this.crc = this.computeCRC();
+    }
+    
     public Frame(FrameType type, int num, String data, String crc) {
         this.type = type;
         this.num = num;
@@ -23,13 +31,14 @@ public class Frame {
         return (this.type != null) ? this.type : null;
     }
 
-    public void computeCRC() {
+    public String computeCRC() {
+        return "0";
     }
 
     // Retourne une version affichable de la trame
     @Override
     public String toString() {
-        return String.format("%s | %s | %s | %s | %s | %s", flag, type, num, data, crc, flag);
+        return String.format("%s | %s | %s | %s | %s | %s", FLAG, type, num, data, crc, FLAG);
     }
 
     // Retourne une chaine de bits (en String) représentant la trame
@@ -38,9 +47,20 @@ public class Frame {
         String stuffedBinNum  = Utils.bitStuff( Integer.toBinaryString(this.num), 8);
         String stuffedBinCrc  = Utils.bitStuff( this.crc, 16);
         
-        return this.flag + stuffedBinType + stuffedBinNum + this.data + stuffedBinCrc + this.flag;
+        return this.FLAG + stuffedBinType + stuffedBinNum + this.data + stuffedBinCrc + this.FLAG;
     }
-
+    
+    public boolean isClosureFrame(){
+        return this.type == FrameType.F;
+    }
+    
+    public static Frame createConnectionFrame(int protocol){
+        return new Frame(FrameType.C, protocol,"0","0");
+    }
+    
+    public static Frame createClosureFrame(){
+        return new Frame(FrameType.F, 0,"0","0");
+    }
 
 
     // Convertit une chaine de bits (en String) en un objet Frame
@@ -70,8 +90,8 @@ public class Frame {
         int num_ = Integer.parseInt(rawFrame.substring(16, 24), 2);
 
         // On vérifie que le numéro ne dépasse pas la limite (3 bits dans l'énoncé)
-        if (num_ <= 0 || num_ >= Math.pow(2, numMaxBit)) {
-            throw new IllegalArgumentException("Frame number cannot exceed " + numMaxBit + " bits capacity!");
+        if (num_ < 0 || num_ >= MAX_SEQ_NUM) {
+            throw new IllegalArgumentException("Frame number cannot exceed " + MAX_SEQ_NUM + " !");
         }
 
         //-- Extraction de Data
