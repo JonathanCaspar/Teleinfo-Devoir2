@@ -38,7 +38,7 @@ public class Utils {
 
     
     //Tranform un string binaire en un tableau contenant le nombre binaire
-    public static int[] transformStringToBin(String data) {
+    public static int[] transformStringToBinArray(String data) {
 
         int[] dataArray = new int[data.length()];
 
@@ -53,6 +53,8 @@ public class Utils {
         return (dataArray);
 
     }
+
+    
     
     //Concatène 2 tableau de int ensembl, un à la suite de l'autre
     public static int[] concatenate2Array(int[] array1, int[] array2) {
@@ -72,8 +74,21 @@ public class Utils {
         return (bothArray);
     }
 
-    //Transforme un string de données en un string binaire
-    public static byte[] transformLatinToBin(String data) {
+    //Transform un StringBuilder de code binaire en un string que l'on peut envoyer
+     public static String transformBinToString(StringBuilder data) {
+
+        String dataString = "";
+
+        for (int i = 0; i < data.length(); i++) {
+            dataString += data.charAt(i);
+
+        }
+        return (dataString);
+
+    }
+
+    //Transforme un string de texte en latin en un string binaire
+    public static StringBuilder transformLatinToBin(String data) {
 
         Charset iso88591charset = Charset.forName("ISO-8859-1");
 
@@ -88,21 +103,25 @@ public class Utils {
                 binary.append((val & 128) == 0 ? 0 : 1);
                 val <<= 1;
             }
-            binary.append(' ');
           }
 
-
-        String text = new String(bytes, iso88591charset);
        
-    return(bytes);
+    return(binary);
 
     }
 
-    public static String transformBinToLatin(byte[] bin) throws UnsupportedEncodingException{
-        Charset iso88591charset = Charset.forName("ISO-8859-1");
+    //Transforme un string binaire en un texte en latin
+    public static String transformBinToLatin(String data) throws UnsupportedEncodingException{
+        
+        String s = "";
+        for(int index = 0; index < data.length(); index+=8) {
+             String temp = data.substring(index, index+8);
+             int num = Integer.parseInt(temp,2);
+             char letter = (char) num;
+             s = s+letter;
+        }
 
-        String text = new String(bin,iso88591charset);
-        return(text);
+        return(s);
     }
     
     //Permet de vérifier s'il y a une erreur dans la trame avec le résultat de la division polynomiale
@@ -122,21 +141,5 @@ public class Utils {
 
     }
 
-    //Tranform un string binaire en un tableau contenant le nombre binaire
-    //Retourne un tableau de int contenant les bits
-    public static int[] binStringToArray(String data) {
-
-        int[] dataArray = new int[data.length()];
-
-        for (int i = 0; i < data.length(); i++) {
-            if (data.charAt(i) == '1') {
-                dataArray[i] = 1;
-            } else {
-                dataArray[i] = 0;
-            }
-
-        }
-        return (dataArray);
-
-    }
+    
 }
