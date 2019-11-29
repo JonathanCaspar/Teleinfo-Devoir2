@@ -145,6 +145,14 @@ public class Sender {
 
     public static void main(String[] args) throws Exception {
 
+    	int[] unAckedFrame = new int[8]; //Pour garder en mémoire les frames envoyés
+    	int positionWindow = 0;
+    	int frameToSend = 0;
+    	Frame[] ackFrame = new Frame[8]; //Pour conserver les ack reçu
+    	boolean WindowFull = false;
+
+
+
         // On fait une validation des arguments
         if (!Utils.validateSenderArgs(args)) {
             System.out.println("Les arguments fournis n'ont pas le format valide ('<Nom_Machine> <Numero_Port> <Nom_fichier> <0>')");
@@ -166,7 +174,35 @@ public class Sender {
                 String rawFrame = "01111110" + "00000000" + "00000011" + "10101010" + "1101010111101010" + "01111110";
                 Frame testFrame = Frame.parseFrame(rawFrame);
                 sender.send(testFrame);
-                
+
+                while(True){
+
+                	if(!WindowFull){ //envoyer tant qu'il y a de la place dans la fenêtre
+
+                		crcString = Utils.calculateCRC(infoFrames[frameToSend]);
+
+                		infoFrames[frameToSend].crc = crcString;
+
+                		String code = infoFrames[frameToSend].encore();
+
+                		sender.send(code);
+
+                		unAckedFrame[frameToSend%frame.MAX_SEQ_NUM] = frameToSend++; //Conserve les éléments envoyé dans la fenêtre
+                		positionWindow++;
+                		if(positionWind == unAckedFrame.length){
+                			WindowFull = true;
+                		}
+
+                	}
+                	else{
+                		
+                		//Attendre que le receveur envoit un ack de frame
+                	}
+
+
+
+                }
+               
                 Frame closureFrame = Frame.createClosureFrame();
                 sender.send(closureFrame);
                 

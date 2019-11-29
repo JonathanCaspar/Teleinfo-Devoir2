@@ -153,40 +153,10 @@ public class Receiver {
             System.out.println(result[k]);
         }
 
-        //Vérification
-        boolean verif = true;
-        int index = 0;
-
-        while ((verif == true) && (index < result.length)) {
-
-            if (result[index] != 0) {
-                verif = false;
-            } else {
-                index++;
-            }
-        }
-        System.out.println(verif);
 
     }
 
-    //Vérifie si le type, le num et le data ont été erronés durant l'envoi
-    /*public static void verification(FrameType type, int num, String data, String crc) {
-
-        int[] checksum = {1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}; //x16+x12+x5+1
-
-        int[] typeArray = transformStringtoBin(Integer.toBinaryString(receivedFrames));
-        int[] numArray = transformStringtoBin(Integer.toBinaryString(receivedFrames));
-        int[] crcArray = transformStringtoBin(Integer.toBinaryString(receivedFrames));
-
-        concatenateArray(typeArray, crcArray);
-        concatenateArray(numArray, crcArray);
-        concatenateArray(receivedFrame, crcArray);
-
-        checkSum(typeArray + crcArray, checksum);
-
-
-    }*/
-    
+  
     public static void main(String[] args) throws Exception {
         
         if (false && !Utils.validateReceiverArgs(args)) { // 'false' pour test seulement
@@ -202,18 +172,7 @@ public class Receiver {
                 receiver.disconnectSocket();
             }
 
-            /*int[] data = {1, 0, 1, 0};
-            for (int i = 0; i < data.length; i++) {
-                System.out.println(data[i]);
-            }
-            int[] checksum = {1, 0};
-            for (int i = 0; i < checksum.length; i++) {
-                System.out.println(checksum[i]);
-            }
-
-            checkSum(data, checksum);
-
-            //Verification des erreurs erronés*/
+            
         }
     }
 }

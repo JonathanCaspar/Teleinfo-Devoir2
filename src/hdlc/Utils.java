@@ -54,24 +54,39 @@ public class Utils {
 
     }
 
-    
+    public static String transformBinArrayToString(int[] data) {
+
+        String dataString = "";
+
+        for (int i = 0; i < data.length; i++) {
+            dataString += data[i];
+        }
+        return (dataString);
+
+    }
+
     
     //Concatène 2 tableau de int ensembl, un à la suite de l'autre
-    public static int[] concatenate2Array(int[] array1, int[] array2) {
+    public static int[] concatenate3Array(int[] array1, int[] array2, int[] array3) {
 
-        int[] bothArray = new int[array1.length + array2.length];
+        int[] array = new int[array1.length + array2.length + array3.length];
 
         for (int i = 0; i < array1.length; i++) {
-            bothArray[i] = array1[i];
+            array[i] = array1[i];
 
         }
 
         for (int i = 0; i < array2.length; i++) {
-            bothArray[i + array1.length] = array2[i];
+            array[i + array1.length] = array2[i];
 
         }
 
-        return (bothArray);
+         for (int i = 0; i < array3.length; i++) {
+            array[i + array1.length + array3.length] = array3[i];
+
+        }
+
+        return (array);
     }
 
     //Transform un StringBuilder de code binaire en un string que l'on peut envoyer
@@ -141,5 +156,32 @@ public class Utils {
 
     }
 
+    public static String calcultateCRC(Frame frame){
+
+        String data  = "";
+
+        binType = this.transformLatinToBin(infoFrames[frameToSend].type);
+        stringType = this.transformBinToString(binType);
+        data += stringType;
+
+        binNum = this.transformLatinToBin(infoFrames[frameToSend].num);
+        stringNum = this.transformBinToString(binNum);
+        data += stringNum;
+
+        binData = this.transformLatinToBin(infoFrames[frameToSend].data);
+        stringData = this.transformBinToString(binData);
+        data += stringData;
+
+        data += "0000000000000000" //Ajout du numéro de zéro de CRC-CCITT
+
+        int[] intData = this.tranformStringToBinArray(data);
+
+        int[] checksum = frame.checkSum(intData, Frame.CCITT);
+
+        String crcString = this.tranformBinArrayToString(checksum);
+
+        return(crcString);
+
+    }
     
 }

@@ -6,6 +6,7 @@ public class Frame {
 
     final public static int MAX_SEQ_NUM = 8; // car 3 bits
     final public static int DATA_MAX_SIZE = 20; // 10 caractères
+    final public static int[] CCITT = {1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1};
     
     final private String FLAG = "01111110";
     private FrameType type;
@@ -138,22 +139,5 @@ public class Frame {
 
     }
 
-     //Vérifie si le type, le num et le data ont été erronés durant l'envoi
-    /*public static void verification(FrameType type, int num, String data, String crc) {
-
-        int[] checksum = {1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}; //x16+x12+x5+1
-
-        int[] typeArray = transformStringtoBin(Integer.toBinaryString(receivedFrames));
-        int[] numArray = transformStringtoBin(Integer.toBinaryString(receivedFrames));
-        int[] crcArray = transformStringtoBin(Integer.toBinaryString(receivedFrames));
-
-        concatenateArray(typeArray, crcArray);
-        concatenateArray(numArray, crcArray);
-        concatenateArray(receivedFrame, crcArray);
-
-        checkSum(typeArray + crcArray, checksum);
-
-
-    }*/
 
 }
