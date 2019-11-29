@@ -156,29 +156,29 @@ public class Utils {
 
     }
 
-    public static String calcultateCRC(Frame frame){
+    public static String calculateCRC(Frame frame){
 
         String data  = "";
 
-        binType = this.transformLatinToBin(infoFrames[frameToSend].type);
-        stringType = this.transformBinToString(binType);
+        StringBuilder binType = transformLatinToBin(frame.getType() + "");
+        String stringType = transformBinToString(binType);
         data += stringType;
 
-        binNum = this.transformLatinToBin(infoFrames[frameToSend].num);
-        stringNum = this.transformBinToString(binNum);
+        StringBuilder binNum = transformLatinToBin(frame.getNum() + "");
+        String stringNum = transformBinToString(binNum);
         data += stringNum;
 
-        binData = this.transformLatinToBin(infoFrames[frameToSend].data);
-        stringData = this.transformBinToString(binData);
+        StringBuilder binData = transformLatinToBin(frame.getData());
+        String stringData = transformBinToString(binData);
         data += stringData;
 
-        data += "0000000000000000" //Ajout du numéro de zéro de CRC-CCITT
+        data += "0000000000000000"; //Ajout du numéro de zéro de CRC-CCITT
 
-        int[] intData = this.tranformStringToBinArray(data);
+        int[] intData = transformStringToBinArray(data);
 
         int[] checksum = frame.checkSum(intData, Frame.CCITT);
 
-        String crcString = this.tranformBinArrayToString(checksum);
+        String crcString = transformBinArrayToString(checksum);
 
         return(crcString);
 

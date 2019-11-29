@@ -18,7 +18,7 @@ public class Frame {
         this.type = type;
         this.num = num;
         this.data = data;
-        this.crc = this.computeCRC();
+        this.crc = null;
     }
     
     public Frame(FrameType type, int num, String data, String crc) {
@@ -31,9 +31,17 @@ public class Frame {
     public FrameType getType() {
         return (this.type != null) ? this.type : null;
     }
+    
+    public int getNum() {
+        return (this.num);
+    }
+    
+    public String getData() {
+        return (this.data);
+    }
 
-    public String computeCRC() {
-        return "0";
+    public void computeCRC(String crc) {
+        this.crc = crc;
     }
 
     // Retourne une version affichable de la trame

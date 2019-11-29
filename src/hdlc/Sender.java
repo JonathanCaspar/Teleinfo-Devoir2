@@ -142,6 +142,16 @@ public class Sender {
         }
     }
     
+    public void generateFrameAndSend(int frameToSend, Sender sender) {
+    	
+    	String crcString = Utils.calculateCRC(this.infoFrames.get(frameToSend));
+
+    	this.infoFrames.get(frameToSend).computeCRC(crcString);
+		
+		sender.send(this.infoFrames.get(frameToSend));
+    	
+    	
+    }
 
     public static void main(String[] args) throws Exception {
 
@@ -150,7 +160,6 @@ public class Sender {
     	int frameToSend = 0;
     	Frame[] ackFrame = new Frame[8]; //Pour conserver les ack reçu
     	boolean WindowFull = false;
-
 
 
         // On fait une validation des arguments
@@ -174,23 +183,20 @@ public class Sender {
                 String rawFrame = "01111110" + "00000000" + "00000011" + "10101010" + "1101010111101010" + "01111110";
                 Frame testFrame = Frame.parseFrame(rawFrame);
                 sender.send(testFrame);
-
-                while(True){
+                
+                //Envoyer tant qu'il y a des frames � envoyer
+                while(true){
 
                 	if(!WindowFull){ //envoyer tant qu'il y a de la place dans la fenêtre
 
-                		crcString = Utils.calculateCRC(infoFrames[frameToSend]);
-
-                		infoFrames[frameToSend].crc = crcString;
-
-                		String code = infoFrames[frameToSend].encore();
-
-                		sender.send(code);
-
-                		unAckedFrame[frameToSend%frame.MAX_SEQ_NUM] = frameToSend++; //Conserve les éléments envoyé dans la fenêtre
+                		sender.generateFrameAndSend(frameToSend, sender);
+                    	
+                		unAckedFrame[frameToSend%Frame.MAX_SEQ_NUM] = frameToSend++; //Conserve les éléments envoyé dans la fenêtre
                 		positionWindow++;
-                		if(positionWind == unAckedFrame.length){
+                		
+                		if(positionWindow == unAckedFrame.length){
                 			WindowFull = true;
+                			break;
                 		}
 
                 	}
