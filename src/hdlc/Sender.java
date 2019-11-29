@@ -6,7 +6,8 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
+import java.util.Timer;
+import java.util.TimerTask;
 
 /*
    Agit en tant que SocketClient : tente de se connecter Ã  un serveur
@@ -25,6 +26,12 @@ public class Sender {
     private Socket socket;
     private DataOutputStream dOut;
     private Reader fileReader;
+    
+    private Timer timer;
+	private boolean windowFull;
+	private int frameToSend;
+	private int[] unAckedFrame; //Pour garder en mÃ©moire les frames envoyÃ©s
+	private int positionWindow; //Conserve la dernière frame envoyé mais non confirmé
 
     public Sender() {
         this.host = "127.0.0.1"; //localhost
@@ -152,15 +159,24 @@ public class Sender {
     	
     	
     }
+    
+    public void startTimer() {
+    	timer = new Timer();
+    	timer.schedule(new Task(), 1000); //Si le sender n'a pas reçu de réponse du receveur après 1 seconde, il démarre un timer.
+    }
+    
+    class Task extends TimerTask{
+    	public void run() {
+    		frameToSend = unAckedFrame[positionWindow];
+    		windowFull = false;
+    		timer.cancel();
+    		System.out.println("Ack not received, sending everything back!");
+    	}
+    }
 
     public static void main(String[] args) throws Exception {
-
-    	int[] unAckedFrame = new int[8]; //Pour garder en mÃ©moire les frames envoyÃ©s
-    	int positionWindow = 0;
-    	int frameToSend = 0;
-    	Frame[] ackFrame = new Frame[8]; //Pour conserver les ack reÃ§u
-    	boolean WindowFull = false;
-
+    	
+    	Frame[] ackedFrame = new Frame[8]; //Pour conserver les ack recus
 
         // On fait une validation des arguments
         if (!Utils.validateSenderArgs(args)) {
@@ -168,6 +184,7 @@ public class Sender {
             exit(0);
         } else {
             Sender sender = new Sender(args[0], Integer.parseInt(args[1]), args[2], Integer.parseInt(args[3]));
+            
 
             // Si la connection a fonctionnÃ©
             // ET que la lecture et l'extraction des trames du fichier a fonctionnÃ©
@@ -178,35 +195,40 @@ public class Sender {
                 Frame connectionFrame = Frame.createConnectionFrame(sender.getProtocol());
                 sender.send(connectionFrame);
                 
-
+/*
 //                 01111110   00000001   00000011   10101010   1101 0101 1110 1010   01111110
                 String rawFrame = "01111110" + "00000000" + "00000011" + "10101010" + "1101010111101010" + "01111110";
                 Frame testFrame = Frame.parseFrame(rawFrame);
                 sender.send(testFrame);
+ */               
+                sender.windowFull = false;
+                sender.frameToSend = 0;
+                sender.unAckedFrame = new int[8];
+                sender.positionWindow = 0;
                 
                 //Envoyer tant qu'il y a des frames à envoyer
                 while(true){
 
-                	if(!WindowFull){ //envoyer tant qu'il y a de la place dans la fenÃªtre
+                	if(!sender.windowFull){ //envoyer tant qu'il y a de la place dans la fenÃªtre
 
-                		sender.generateFrameAndSend(frameToSend, sender);
+                		sender.generateFrameAndSend(sender.frameToSend, sender);
                     	
-                		unAckedFrame[frameToSend%Frame.MAX_SEQ_NUM] = frameToSend++; //Conserve les Ã©lÃ©ments envoyÃ© dans la fenÃªtre
-                		positionWindow++;
+                		sender.unAckedFrame[sender.positionWindow] = sender.frameToSend++; //Conserve les Ã©lÃ©ments envoyÃ© dans la fenÃªtre
+                		sender.positionWindow = sender.positionWindow++ % Frame.MAX_SEQ_NUM;
                 		
-                		if(positionWindow == unAckedFrame.length){
-                			WindowFull = true;
-                			break;
+                		if(sender.positionWindow == sender.unAckedFrame.length){
+                			sender.windowFull = true;
+                			
                 		}
 
                 	}
                 	else{
-                		
-                		//Attendre que le receveur envoit un ack de frame
+                		//Si on a fait un tour complet de la fenêtre sans avoir reçu de confirmation
+                		if(sender.positionWindow == sender.infoFrames.get(sender.frameToSend).getNum()) { 
+                			sender.startTimer(); //On démarre le chrono. Si on n'a pas reçu la prochaine frame avant la fin du chrono, on réenvoit toute la fenêtre.
+                		}
                 	}
-
-
-
+                	break;
                 }
                
                 Frame closureFrame = Frame.createClosureFrame();

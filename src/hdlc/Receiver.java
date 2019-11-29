@@ -110,54 +110,11 @@ public class Receiver {
         }
     }
 
-    public static void checkSum(int[] data, int[] checksum) {
-
-        int[] result = Arrays.copyOfRange(data, 0, checksum.length);
-        System.out.println("First");
-        for (int k = 0; k < result.length; k++) {
-            System.out.println(result[k]);
-        }
-        for (int i = 0; i < (data.length - checksum.length); i++) {
-
-            if (result[0] == 1) {
-                for (int j = 1; j < checksum.length; j++) {
-                    result[j - 1] = (result[j] ^ checksum[j]);
-                }
-                result[result.length - 1] = data[i + checksum.length];
-
-                System.out.println("Suivi");
-                for (int k = 0; k < result.length; k++) {
-                    System.out.println(result[k]);
-                }
-            } else {
-                for (int j = 1; j < result.length; j++) {
-                    result[j - 1] = result[j];
-                }
-                result[result.length - 1] = data[i + checksum.length];
-
-                System.out.println("Suivi");
-                for (int k = 0; k < result.length; k++) {
-                    System.out.println(result[k]);
-                }
-            }
-        }
-
-        if (result[0] == 1) {
-            for (int j = 0; j < checksum.length; j++) {
-                result[j] = (result[j] ^ checksum[j]);
-            }
-        }
-
-        System.out.println("Result");
-        for (int k = 0; k < result.length; k++) {
-            System.out.println(result[k]);
-        }
-
-
-    }
 
   
     public static void main(String[] args) throws Exception {
+    	
+    	boolean EOF = false;
         
         if (false && !Utils.validateReceiverArgs(args)) { // 'false' pour test seulement
             System.out.println("Les arguments fournis n'ont pas le format valide ('<Numero_Port>')");
@@ -166,8 +123,13 @@ public class Receiver {
             Receiver receiver = new Receiver(Integer.parseInt("82")); //'82' à remplacer par args[0]
 
             if (receiver.initialize() && receiver.acceptClient()) {
+            	
+            	while(!EOF) {
 
                 receiver.listenForFrames();
+                
+            	}
+            	
                 receiver.disconnectClient();
                 receiver.disconnectSocket();
             }
