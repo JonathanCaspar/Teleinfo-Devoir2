@@ -7,27 +7,26 @@ import static hdlc.Utils.transformBinToString;
 import static hdlc.Utils.transformLatinToBin;
 import static hdlc.Utils.transformStringToBinArray;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 
 public class Frame {
 
     final public static int MAX_SEQ_NUM = 8; // car 3 bits
-    final public static int DATA_MAX_SIZE = 20; // 10 caractères
-    
+    final public static int DATA_MAX_SIZE = 2; // 10 caractères
+
     final private String FLAG = "01111110";
     private FrameType type;
     private int num;
     private String data;
     private String crc;
 
-    public Frame(FrameType type, int num, String data) {
+    private Frame(FrameType type, int num, String data) {
         this.type = type;
         this.num = num;
         this.data = data;
-        this.crc = null;
+        this.crc = this.computeCRC();
     }
-    
-    public Frame(FrameType type, int num, String data, String crc) {
+
+    private Frame(FrameType type, int num, String data, String crc) {
         this.type = type;
         this.num = num;
         this.data = data;
@@ -37,27 +36,23 @@ public class Frame {
     public FrameType getType() {
         return (this.type != null) ? this.type : null;
     }
-    
+
     public int getNum() {
         return (this.num);
     }
-    
+
     public String getData() {
         return (this.data);
     }
-    
+
     public String getCRC() {
         return (this.crc);
     }
 
-    public void setCRC(String crc) {
-        this.crc = crc;
+    public void setData(String data) {
+        this.data = data;
     }
-    
-    public void binData(String dataLatin){
-        this.data = dataLatin;
-    }
-    
+
     // Retourne une version affichable de la trame
     @Override
     public String toString() {
@@ -66,34 +61,43 @@ public class Frame {
 
     // Retourne une chaine de bits (en String) représentant la trame
     public String encode() {
-        String stuffedBinType = Utils.bitStuff( Integer.toBinaryString(this.type.ordinal()), 8); // valeur binaire de FrameType
-        String stuffedBinNum  = Utils.bitStuff( Integer.toBinaryString(this.num), 8);
-        String stuffedBinCrc  = Utils.bitStuff( this.crc, 16);
+        String stuffedBinType = Utils.bitStuff(Integer.toBinaryString(this.type.ordinal()), 8); // valeur binaire de FrameType
+        String stuffedBinNum = Utils.bitStuff(Integer.toBinaryString(this.num), 8);
+        String stuffedBinCrc = Utils.bitStuff(this.crc, 16);
         StringBuilder binData = Utils.transformLatinToBin(this.data);
-        String data = Utils.transformBinToString(binData);
-        
-        
-        return this.FLAG + stuffedBinType + stuffedBinNum + data + stuffedBinCrc + this.FLAG;
-    }
-    
-    public boolean isClosureFrame(){
-        return this.type == FrameType.F;
-    }
-    
-    public static Frame createConnectionFrame(int protocol){
-        return new Frame(FrameType.C, protocol,"0","0");
-    }
-    
-    public static Frame createClosureFrame(){
-        return new Frame(FrameType.F, 0,"0","0");
+
+        String binDataStr = Utils.transformBinToString(binData);
+
+        return this.FLAG + stuffedBinType + stuffedBinNum + binDataStr + stuffedBinCrc + this.FLAG;
     }
 
+    // Indique si la trame est de type Fermeture
+    public boolean isClosureFrame() {
+        return this.type == FrameType.F;
+    }
+
+    // Retourne une trame d'information
+    public static Frame createInfoFrame(int num, String data) {
+        return new Frame(FrameType.I, num, data);
+    }
+
+    // Retourne une trame de connexion
+    public static Frame createConnectionFrame(int protocol) {
+        return new Frame(FrameType.C, protocol, "0");
+    }
+
+    // Retourne un trame de fermeture
+    public static Frame createClosureFrame() {
+        return new Frame(FrameType.F, 0, "0");
+    }
 
     // Convertit une chaine de bits (en String) en un objet Frame
     public static Frame parseFrame(String rawFrame) throws UnsupportedEncodingException {
         // Vérification
         int frameLength = rawFrame.length();
-        if (!rawFrame.matches(Utils.binaryRegex)) throw new IllegalArgumentException("Frame string must be binary numbers ONLY!");
+        if (!rawFrame.matches(Utils.binaryRegex)) {
+            throw new IllegalArgumentException("Frame string must be binary numbers ONLY!");
+        }
         if (frameLength < 48) {
             throw new IllegalArgumentException("Frame string is too short!"); //taille minimale requise (4 octets + 2 octets crc)
         }
@@ -123,44 +127,46 @@ public class Frame {
         //-- Extraction de Data
         String data_ = rawFrame.substring(24, frameLength - 24);
         String latinData_ = Utils.transformBinToLatin(data_);
-        
+
         //-- Extraction de Crc
         String crc_ = rawFrame.substring(frameLength - 24, frameLength - 8);
 
         return new Frame(type_, num_, latinData_, crc_);
 
     }
-    
-    
-    public String calculateCRC() {
 
-        String data = "";
+    // Retourne le CRC calculé depuis les attributs type, num et data
+    // Fonction privée utilisé uniquement par les fonctions de création de Frame (createInfoFrame, etc ..)
+    private String computeCRC() {
+
+        String array = "";
 
         StringBuilder binType = transformLatinToBin(this.getType() + "");
         String stringType = transformBinToString(binType);
-        data += stringType;
+        array += stringType;
 
         StringBuilder binNum = transformLatinToBin(this.getNum() + "");
         String stringNum = transformBinToString(binNum);
-        data += stringNum;
+        array += stringNum;
 
         StringBuilder binData = transformLatinToBin(this.getData());
         String stringData = transformBinToString(binData);
-        data += stringData;
+        array += stringData;
 
-        data += CCITTString; //Ajout du numéro de zéro de CRC-CCITT
+        array += CCITTString; //Ajout du numéro de zéro de CRC-CCITT
 
-        int[] intData = transformStringToBinArray(data);
+        int[] intArray = transformStringToBinArray(array);
 
-        int[] checksum = checkSum(intData, CCITT);
+        int[] remainder = Utils.polynomialDivision(intArray, CCITT);
 
-        String crcString = transformBinArrayToString(checksum);
+        String crcString = transformBinArrayToString(remainder);
 
-        return (crcString);
+        return crcString;
 
     }
 
-    public int[] calculateForCRC() {
+    //Permet de vérifier s'il y a une erreur dans la trame avec le résultat de la division polynomiale
+    public boolean checkValidity() {
         String data = "";
 
         StringBuilder binType = transformLatinToBin(this.getType() + "");
@@ -178,58 +184,9 @@ public class Frame {
         data += this.getCRC();
 
         int[] binArray = transformStringToBinArray(data);
-        int[] result = checkSum(binArray, CCITT);
+        int[] result = Utils.polynomialDivision(binArray, CCITT);
 
-        return (result);
-    }
-    
-    //Permet de vérifier s'il y a une erreur dans la trame avec le résultat de la division polynomiale
-    public static boolean verification(int[] result) {
-        boolean verif = true;
-        int index = 0;
-
-        while ((verif == true) && (index < result.length)) {
-
-            if (result[index] != 0) {
-                verif = false;
-            } else {
-                index++;
-            }
-        }
-        return (verif);
-
-    }
-
-    //Permet d'obtenir le résultat d'une division polynomiale entre deux nombre binaire
-    //Utilisé pour créer le CRC (sender) et pour vérifier si des erreurs se sont intégré (receiver)
-    public static int[] checkSum(int[] data, int[] checksum) {
-
-        int[] result = Arrays.copyOfRange(data, 0, checksum.length);
-
-        for (int i = 0; i < (data.length - checksum.length); i++) {
-
-            if (result[0] == 1) {
-                for (int j = 1; j < checksum.length; j++) {
-                    result[j - 1] = (result[j] ^ checksum[j]);
-                }
-                result[result.length - 1] = data[i + checksum.length];
-
-            } else {
-                for (int j = 1; j < result.length; j++) {
-                    result[j - 1] = result[j];
-                }
-                result[result.length - 1] = data[i + checksum.length];
-
-            }
-        }
-
-        if (result[0] == 1) {
-            for (int j = 0; j < checksum.length; j++) {
-                result[j] = (result[j] ^ checksum[j]);
-            }
-        }
-
-        return (Arrays.copyOfRange(result, 1, checksum.length));
-
+        // Si le résultat contient uniquement des 0 alors la trame est valide
+        return Utils.checkIntArrayOnlyZero(result);
     }
 }

@@ -79,29 +79,6 @@ public class Utils {
 
     }
 
-    //Concatène 2 tableau de int ensembl, un à la suite de l'autre
-    public static int[] concatenate3Array(int[] array1, int[] array2, int[] array3) {
-
-        int[] array = new int[array1.length + array2.length + array3.length];
-
-        for (int i = 0; i < array1.length; i++) {
-            array[i] = array1[i];
-
-        }
-
-        for (int i = 0; i < array2.length; i++) {
-            array[i + array1.length] = array2[i];
-
-        }
-
-        for (int i = 0; i < array3.length; i++) {
-            array[i + array1.length + array3.length] = array3[i];
-
-        }
-
-        return (array);
-    }
-
     //Transform un StringBuilder de code binaire en un string que l'on peut envoyer
     public static String transformBinToString(StringBuilder data) {
 
@@ -149,6 +126,49 @@ public class Utils {
         }
 
         return (s);
+    }
+
+    //Permet d'obtenir le résultat d'une division polynomiale entre deux nombres binaires
+    //Utilisé pour vérifier si des erreurs de transmission se sont introduites dans une transmission
+    public static int[] polynomialDivision(int[] array, int[] checksum) {
+
+        int[] result = Arrays.copyOfRange(array, 0, checksum.length);
+
+        for (int i = 0; i < (array.length - checksum.length); i++) {
+
+            if (result[0] == 1) {
+                for (int j = 1; j < checksum.length; j++) {
+                    result[j - 1] = (result[j] ^ checksum[j]);
+                }
+                result[result.length - 1] = array[i + checksum.length];
+
+            } else {
+                for (int j = 1; j < result.length; j++) {
+                    result[j - 1] = result[j];
+                }
+                result[result.length - 1] = array[i + checksum.length];
+
+            }
+        }
+
+        if (result[0] == 1) {
+            for (int j = 0; j < checksum.length; j++) {
+                result[j] = (result[j] ^ checksum[j]);
+            }
+        }
+
+        return (Arrays.copyOfRange(result, 1, checksum.length));
+
+    }
+    
+    // Retourne si un tableau de nombres contient uniquement des 0
+    public static boolean checkIntArrayOnlyZero(int[] array) {
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == 1) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }

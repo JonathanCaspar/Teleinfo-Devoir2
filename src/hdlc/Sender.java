@@ -83,12 +83,12 @@ public class Sender {
 
                 // On crée la trame d'Information (FrameType.I)
                 // en y insérant la section de caractère lue dans le fichier
-                Frame frame = new Frame(FrameType.I, numSeq, String.valueOf(section));
+                Frame frame = Frame.createInfoFrame(numSeq, String.valueOf(section));
 
                 // Débuggage
                 System.out.println("");
                 System.out.println("Frame created = " + frame.toString());
-                //  System.out.println("Binary form   = " + frame.encode());
+                System.out.println("Binary form   = " + frame.encode());
 
                 // On ajoute la trame créée à notre ArrayList
                 this.infoFrames.add(frame);
@@ -156,6 +156,7 @@ public class Sender {
         String crcString = this.infoFrames.get(frameToSend).calculateCRC();
         this.infoFrames.get(frameToSend).setCRC(crcString);
 
+
         this.send(this.infoFrames.get(frameToSend));
 
     }
@@ -195,18 +196,23 @@ public class Sender {
                 Frame connectionFrame = Frame.createConnectionFrame(sender.getProtocol());
                 sender.send(connectionFrame);
 
-                /*
-//                 01111110   00000001   00000011   10101010   1101 0101 1110 1010   01111110
-                String rawFrame = "01111110" + "00000000" + "00000011" + "10101010" + "1101010111101010" + "01111110";
-                Frame testFrame = Frame.parseFrame(rawFrame);
-                sender.send(testFrame);
-                 */
                 sender.windowFull = false;
                 sender.frameToSend = 0;
                 sender.unAckedFrame = new int[8];
                 sender.positionWindow = 0;
 
-                //Envoyer tant qu'il y a des frames � envoyer
+
+                sender.generateFrameAndSend(0);
+                /*//Envoyer tant qu'il y a des frames � envoyer
+                while (true) {
+
+                    if (!sender.windowFull) { //envoyer tant qu'il y a de la place dans la fenêtre
+
+                        sender.generateFrameAndSend(sender.frameToSend);
+
+                        sender.unAckedFrame[sender.positionWindow] = sender.frameToSend++; //Conserve les éléments envoyé dans la fenêtre
+                        sender.positionWindow++;
+                        System.out.println("Position window " + sender.positionWindow);
 
                 while(true){
 
@@ -234,7 +240,7 @@ public class Sender {
                 	}
                 	
 
-                }
+                }*/
 
                 Frame closureFrame = Frame.createClosureFrame();
                 sender.send(closureFrame);
