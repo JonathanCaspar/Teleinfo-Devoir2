@@ -1,5 +1,11 @@
 package hdlc;
 
+import static hdlc.Utils.CCITT;
+import static hdlc.Utils.CCITTString;
+import static hdlc.Utils.transformBinArrayToString;
+import static hdlc.Utils.transformBinToString;
+import static hdlc.Utils.transformLatinToBin;
+import static hdlc.Utils.transformStringToBinArray;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
@@ -44,7 +50,7 @@ public class Frame {
         return (this.crc);
     }
 
-    public void computeCRC(String crc) {
+    public void setCRC(String crc) {
         this.crc = crc;
     }
     
@@ -122,6 +128,108 @@ public class Frame {
         String crc_ = rawFrame.substring(frameLength - 24, frameLength - 8);
 
         return new Frame(type_, num_, latinData_, crc_);
+
+    }
+    
+    
+    public String calculateCRC() {
+
+        String data = "";
+
+        StringBuilder binType = transformLatinToBin(this.getType() + "");
+        String stringType = transformBinToString(binType);
+        data += stringType;
+
+        StringBuilder binNum = transformLatinToBin(this.getNum() + "");
+        String stringNum = transformBinToString(binNum);
+        data += stringNum;
+
+        StringBuilder binData = transformLatinToBin(this.getData());
+        String stringData = transformBinToString(binData);
+        data += stringData;
+
+        data += CCITTString; //Ajout du numéro de zéro de CRC-CCITT
+
+        int[] intData = transformStringToBinArray(data);
+
+        int[] checksum = checkSum(intData, CCITT);
+
+        String crcString = transformBinArrayToString(checksum);
+
+        return (crcString);
+
+    }
+
+    public int[] calculateForCRC() {
+        String data = "";
+
+        StringBuilder binType = transformLatinToBin(this.getType() + "");
+        String stringType = transformBinToString(binType);
+        data += stringType;
+
+        StringBuilder binNum = transformLatinToBin(this.getNum() + "");
+        String stringNum = transformBinToString(binNum);
+        data += stringNum;
+
+        StringBuilder binData = transformLatinToBin(this.getData());
+        String stringData = transformBinToString(binData);
+        data += stringData;
+
+        data += this.getCRC();
+
+        int[] binArray = transformStringToBinArray(data);
+        int[] result = checkSum(binArray, CCITT);
+
+        return (result);
+    }
+    
+    //Permet de vérifier s'il y a une erreur dans la trame avec le résultat de la division polynomiale
+    public static boolean verification(int[] result) {
+        boolean verif = true;
+        int index = 0;
+
+        while ((verif == true) && (index < result.length)) {
+
+            if (result[index] != 0) {
+                verif = false;
+            } else {
+                index++;
+            }
+        }
+        return (verif);
+
+    }
+
+    //Permet d'obtenir le résultat d'une division polynomiale entre deux nombre binaire
+    //Utilisé pour créer le CRC (sender) et pour vérifier si des erreurs se sont intégré (receiver)
+    public static int[] checkSum(int[] data, int[] checksum) {
+
+        int[] result = Arrays.copyOfRange(data, 0, checksum.length);
+
+        for (int i = 0; i < (data.length - checksum.length); i++) {
+
+            if (result[0] == 1) {
+                for (int j = 1; j < checksum.length; j++) {
+                    result[j - 1] = (result[j] ^ checksum[j]);
+                }
+                result[result.length - 1] = data[i + checksum.length];
+
+            } else {
+                for (int j = 1; j < result.length; j++) {
+                    result[j - 1] = result[j];
+                }
+                result[result.length - 1] = data[i + checksum.length];
+
+            }
+        }
+
+        if (result[0] == 1) {
+            for (int j = 0; j < checksum.length; j++) {
+                result[j] = (result[j] ^ checksum[j]);
+            }
+        }
+
+        return (Arrays.copyOfRange(result, 1, checksum.length));
 
     }
 }
