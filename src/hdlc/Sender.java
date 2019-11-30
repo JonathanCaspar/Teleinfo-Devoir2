@@ -18,44 +18,43 @@ public class Sender {
     private ArrayList<Frame> infoFrames;
     private final int MAX_TRIES = 5;
 
-    private final String host;
-    private final int port;
-    private final String file_name;
-    private final int protocol;
+    private final String HOST;
+    private final int PORT;
+    private final String FILE_NAME;
+    private final int PROTOCOL;
 
     private Socket socket;
     private DataOutputStream dOut;
     private Reader fileReader;
-    
+
     private Timer timer;
-	private boolean windowFull;
-	private int frameToSend;
-	private int[] unAckedFrame; //Pour garder en mémoire les frames envoyés
-	private int positionWindow; //Conserve la derni�re frame envoy� mais non confirm�
+    private boolean windowFull;
+    private int frameToSend;
+    private int[] unAckedFrame; //Pour garder en mémoire les frames envoyés
+    private int positionWindow; //Conserve la derni�re frame envoy� mais non confirm�
 
     public Sender() {
-        this.host = "127.0.0.1"; //localhost
-        this.port = 8080;
-        this.file_name = null;
-        this.protocol = 0;
+        this.HOST = "127.0.0.1"; //localhost
+        this.PORT = 8080;
+        this.FILE_NAME = null;
+        this.PROTOCOL = 0;
     }
 
     public Sender(String host, int port, String file_name, int protocol) {
-        this.host = host;
-        this.port = port;
-        this.file_name = file_name;
-        this.protocol = protocol;
+        this.HOST = host;
+        this.PORT = port;
+        this.FILE_NAME = file_name;
+        this.PROTOCOL = protocol;
     }
-    
-    public int getProtocol(){
-        return this.protocol;
+
+    public int getProtocol() {
+        return this.PROTOCOL;
     }
-    
 
     // Envoie un Frame via un socket fourni en paramètre
     public void send(Frame frame) {
         if (frame != null && this.socket != null && this.socket.isConnected()) {
-            
+
             String binaryFrame = frame.encode();
             try {
                 this.dOut.writeUTF(binaryFrame);
@@ -66,37 +65,37 @@ public class Sender {
             }
         }
     }
-    
+
     // Extrait les caractères d'un fichier texte, les fragmente et génère des Frame
-    public boolean readFile(){
+    public boolean readFile() {
         try {
-            this.fileReader = new FileReader(this.file_name);
+            this.fileReader = new FileReader(this.FILE_NAME);
             this.infoFrames = new ArrayList<Frame>();
 
             char[] section = new char[Frame.DATA_MAX_SIZE];
             int numSeq = 0;
-            
+
             // Tant qu'on arrive pas à la fin du fichier
-            while (fileReader.read(section, 0, Frame.DATA_MAX_SIZE) != -1){
-                
+            while (fileReader.read(section, 0, Frame.DATA_MAX_SIZE) != -1) {
+
                 // On crée la trame d'Information (FrameType.I)
                 // en y insérant la section de caractère lue dans le fichier
-                Frame frame = new Frame (FrameType.I, numSeq, String.valueOf(section));
-                
+                Frame frame = new Frame(FrameType.I, numSeq, String.valueOf(section));
+
                 // Débuggage
                 System.out.println("");
                 System.out.println("Frame created = " + frame.toString());
-              //  System.out.println("Binary form   = " + frame.encode());
-                
+                //  System.out.println("Binary form   = " + frame.encode());
+
                 // On ajoute la trame créée à notre ArrayList
                 this.infoFrames.add(frame);
 
                 // On calcule le prochain numéro de séquence
-                numSeq = (numSeq + 1 ) % Frame.MAX_SEQ_NUM;
+                numSeq = (numSeq + 1) % Frame.MAX_SEQ_NUM;
             }
-            
+
             return true;
-            
+
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
             return false;
@@ -113,7 +112,7 @@ public class Sender {
 
         while (try_attempt <= this.MAX_TRIES && !socket.isConnected()) {
             try {
-                SocketAddress sockaddr = new InetSocketAddress(this.host, this.port);
+                SocketAddress sockaddr = new InetSocketAddress(this.HOST, this.PORT);
                 this.socket = new Socket();
                 this.socket.connect(sockaddr);
 
@@ -148,34 +147,35 @@ public class Sender {
             Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
-    public void generateFrameAndSend(int frameToSend, Sender sender) {
-    	
-    	String crcString = Utils.calculateCRC(this.infoFrames.get(frameToSend));
-System.out.println(crcString);
-    	this.infoFrames.get(frameToSend).computeCRC(crcString);
-        		
-	sender.send(this.infoFrames.get(frameToSend));	
-          
+
+    public void generateFrameAndSend(int frameToSend) {
+
+        String crcString = this.infoFrames.get(frameToSend).calculateCRC();
+        System.out.println(crcString);
+        this.infoFrames.get(frameToSend).setCRC(crcString);
+
+        this.send(this.infoFrames.get(frameToSend));
+
     }
-    
+
     public void startTimer() {
-    	timer = new Timer();
-    	timer.schedule(new Task(), 1000); //Si le sender n'a pas re�u de r�ponse du receveur apr�s 1 seconde, il d�marre un timer.
+        timer = new Timer();
+        timer.schedule(new Task(), 1000); //Si le sender n'a pas re�u de r�ponse du receveur apr�s 1 seconde, il d�marre un timer.
     }
-    
-    class Task extends TimerTask{
-    	public void run() {
-    		frameToSend = unAckedFrame[positionWindow];
-    		windowFull = false;
-    		timer.cancel();
-    		System.out.println("Ack not received, sending everything back!");
-    	}
+
+    class Task extends TimerTask {
+
+        public void run() {
+            frameToSend = unAckedFrame[positionWindow];
+            windowFull = false;
+            timer.cancel();
+            System.out.println("Ack not received, sending everything back!");
+        }
     }
 
     public static void main(String[] args) throws Exception {
-    	
-    	Frame[] ackedFrame = new Frame[8]; //Pour conserver les ack recus
+
+        Frame[] ackedFrame = new Frame[8]; //Pour conserver les ack recus
 
         // On fait une validation des arguments
         if (!Utils.validateSenderArgs(args)) {
@@ -183,60 +183,57 @@ System.out.println(crcString);
             exit(0);
         } else {
             Sender sender = new Sender(args[0], Integer.parseInt(args[1]), args[2], Integer.parseInt(args[3]));
-            
 
             // Si la connection a fonctionné
             // ET que la lecture et l'extraction des trames du fichier a fonctionné
             // on peut commencer à envoyer les données
             if (sender.connect() && sender.readFile()) {
-                
+
                 // On fait une demande de connexion pour transmission de données
                 Frame connectionFrame = Frame.createConnectionFrame(sender.getProtocol());
                 sender.send(connectionFrame);
-                
-/*
+
+                /*
 //                 01111110   00000001   00000011   10101010   1101 0101 1110 1010   01111110
                 String rawFrame = "01111110" + "00000000" + "00000011" + "10101010" + "1101010111101010" + "01111110";
                 Frame testFrame = Frame.parseFrame(rawFrame);
                 sender.send(testFrame);
- */               
+                 */
                 sender.windowFull = false;
                 sender.frameToSend = 0;
                 sender.unAckedFrame = new int[8];
                 sender.positionWindow = 0;
-                
+
                 //Envoyer tant qu'il y a des frames � envoyer
-                while(true){
+                while (true) {
 
-                	if(!sender.windowFull){ //envoyer tant qu'il y a de la place dans la fenêtre
+                    if (!sender.windowFull) { //envoyer tant qu'il y a de la place dans la fenêtre
 
-                		sender.generateFrameAndSend(sender.frameToSend, sender);
-                    	
-                		sender.unAckedFrame[sender.positionWindow] = sender.frameToSend++; //Conserve les éléments envoyé dans la fenêtre
-                		sender.positionWindow++;
-                                System.out.println("Position window " + sender.positionWindow);
+                        sender.generateFrameAndSend(sender.frameToSend);
 
-                		if(sender.positionWindow == sender.unAckedFrame.length){
-                			sender.windowFull = true;
-                			
-                		}
+                        sender.unAckedFrame[sender.positionWindow] = sender.frameToSend++; //Conserve les éléments envoyé dans la fenêtre
+                        sender.positionWindow++;
+                        System.out.println("Position window " + sender.positionWindow);
 
-                	}
-                	else{
-                		//Si on a fait un tour complet de la fen�tre sans avoir re�u de confirmation
-                		if(sender.positionWindow == sender.infoFrames.get(sender.frameToSend).getNum()) { 
-                			sender.startTimer();//On d�marre le chrono. Si on n'a pas re�u la prochaine frame avant la fin du chrono, on r�envoit toute la fen�tre.
-                		break;
-                                }
-                		
-                	}
-                	
+                        if (sender.positionWindow == sender.unAckedFrame.length) {
+                            sender.windowFull = true;
+
+                        }
+
+                    } else {
+                        //Si on a fait un tour complet de la fen�tre sans avoir re�u de confirmation
+                        if (sender.positionWindow == sender.infoFrames.get(sender.frameToSend).getNum()) {
+                            sender.startTimer();//On d�marre le chrono. Si on n'a pas re�u la prochaine frame avant la fin du chrono, on r�envoit toute la fen�tre.
+                            break;
+                        }
+
+                    }
+
                 }
-               
+
                 Frame closureFrame = Frame.createClosureFrame();
                 sender.send(closureFrame);
-                
-                
+
                 sender.disconnect();
             }
         }
