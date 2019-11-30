@@ -1,12 +1,12 @@
 package hdlc;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
 public class Frame {
 
     final public static int MAX_SEQ_NUM = 8; // car 3 bits
     final public static int DATA_MAX_SIZE = 20; // 10 caractères
-    final public static int[] CCITT = {1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1};
     
     final private String FLAG = "01111110";
     private FrameType type;
@@ -39,11 +39,19 @@ public class Frame {
     public String getData() {
         return (this.data);
     }
+    
+    public String getCRC() {
+        return (this.crc);
+    }
 
     public void computeCRC(String crc) {
         this.crc = crc;
     }
-
+    
+    public void binData(String dataLatin){
+        this.data = dataLatin;
+    }
+    
     // Retourne une version affichable de la trame
     @Override
     public String toString() {
@@ -55,8 +63,11 @@ public class Frame {
         String stuffedBinType = Utils.bitStuff( Integer.toBinaryString(this.type.ordinal()), 8); // valeur binaire de FrameType
         String stuffedBinNum  = Utils.bitStuff( Integer.toBinaryString(this.num), 8);
         String stuffedBinCrc  = Utils.bitStuff( this.crc, 16);
+        StringBuilder binData = Utils.transformLatinToBin(this.data);
+        String data = Utils.transformBinToString(binData);
         
-        return this.FLAG + stuffedBinType + stuffedBinNum + this.data + stuffedBinCrc + this.FLAG;
+        
+        return this.FLAG + stuffedBinType + stuffedBinNum + data + stuffedBinCrc + this.FLAG;
     }
     
     public boolean isClosureFrame(){
@@ -73,7 +84,7 @@ public class Frame {
 
 
     // Convertit une chaine de bits (en String) en un objet Frame
-    public static Frame parseFrame(String rawFrame) {
+    public static Frame parseFrame(String rawFrame) throws UnsupportedEncodingException {
         // Vérification
         int frameLength = rawFrame.length();
         if (!rawFrame.matches(Utils.binaryRegex)) throw new IllegalArgumentException("Frame string must be binary numbers ONLY!");
@@ -105,47 +116,12 @@ public class Frame {
 
         //-- Extraction de Data
         String data_ = rawFrame.substring(24, frameLength - 24);
-
+        String latinData_ = Utils.transformBinToLatin(data_);
+        
         //-- Extraction de Crc
         String crc_ = rawFrame.substring(frameLength - 24, frameLength - 8);
 
-        return new Frame(type_, num_, data_, crc_);
+        return new Frame(type_, num_, latinData_, crc_);
 
     }
-
-
-//Permet d'obtenir le résultat d'une division polynomiale entre deux nombre binaire
-//Utilisé pour créer le CRC (sender) et pour vérifier si des erreurs se sont intégré (receiver)
-    public static int[] checkSum(int[] data, int[] checksum) {
-
-        int[] result = Arrays.copyOfRange(data, 0, checksum.length);
-
-        for (int i = 0; i < (data.length - checksum.length); i++) {
-
-            if (result[0] == 1) {
-                for (int j = 1; j < checksum.length; j++) {
-                    result[j - 1] = (result[j] ^ checksum[j]);
-                }
-                result[result.length - 1] = data[i + checksum.length];
-
-            } else {
-                for (int j = 1; j < result.length; j++) {
-                    result[j - 1] = result[j];
-                }
-                result[result.length - 1] = data[i + checksum.length];
-
-            }
-        }
-
-        if (result[0] == 1) {
-            for (int j = 0; j < checksum.length; j++) {
-                result[j] = (result[j] ^ checksum[j]);
-            }
-        }
-
-        return(result);
-
-    }
-
-
 }

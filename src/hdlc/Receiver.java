@@ -60,6 +60,11 @@ public class Receiver {
                 // Adapte la réponse selon le type de paquet recu
                 switch(frame.getType()){
                     case I :
+                        String crc = Utils.calculateCRC(frame);
+                        int[] crcArray = Utils.transformStringToBinArray(crc);
+                        boolean verification = Utils.verification(Utils.calculateForCRC(frame));
+                        if(verification){
+                        }
                         break;
                         
                     case C :

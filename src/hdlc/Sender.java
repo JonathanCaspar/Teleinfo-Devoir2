@@ -31,7 +31,7 @@ public class Sender {
 	private boolean windowFull;
 	private int frameToSend;
 	private int[] unAckedFrame; //Pour garder en mÃ©moire les frames envoyÃ©s
-	private int positionWindow; //Conserve la dernière frame envoyé mais non confirmé
+	private int positionWindow; //Conserve la derniï¿½re frame envoyï¿½ mais non confirmï¿½
 
     public Sender() {
         this.host = "127.0.0.1"; //localhost
@@ -86,7 +86,7 @@ public class Sender {
                 // DÃ©buggage
                 System.out.println("");
                 System.out.println("Frame created = " + frame.toString());
-                System.out.println("Binary form   = " + frame.encode());
+              //  System.out.println("Binary form   = " + frame.encode());
                 
                 // On ajoute la trame crÃ©Ã©e Ã  notre ArrayList
                 this.infoFrames.add(frame);
@@ -152,17 +152,16 @@ public class Sender {
     public void generateFrameAndSend(int frameToSend, Sender sender) {
     	
     	String crcString = Utils.calculateCRC(this.infoFrames.get(frameToSend));
-
+System.out.println(crcString);
     	this.infoFrames.get(frameToSend).computeCRC(crcString);
-		
-		sender.send(this.infoFrames.get(frameToSend));
-    	
-    	
+        		
+	sender.send(this.infoFrames.get(frameToSend));	
+          
     }
     
     public void startTimer() {
     	timer = new Timer();
-    	timer.schedule(new Task(), 1000); //Si le sender n'a pas reçu de réponse du receveur après 1 seconde, il démarre un timer.
+    	timer.schedule(new Task(), 1000); //Si le sender n'a pas reï¿½u de rï¿½ponse du receveur aprï¿½s 1 seconde, il dï¿½marre un timer.
     }
     
     class Task extends TimerTask{
@@ -206,7 +205,7 @@ public class Sender {
                 sender.unAckedFrame = new int[8];
                 sender.positionWindow = 0;
                 
-                //Envoyer tant qu'il y a des frames à envoyer
+                //Envoyer tant qu'il y a des frames ï¿½ envoyer
                 while(true){
 
                 	if(!sender.windowFull){ //envoyer tant qu'il y a de la place dans la fenÃªtre
@@ -214,8 +213,9 @@ public class Sender {
                 		sender.generateFrameAndSend(sender.frameToSend, sender);
                     	
                 		sender.unAckedFrame[sender.positionWindow] = sender.frameToSend++; //Conserve les Ã©lÃ©ments envoyÃ© dans la fenÃªtre
-                		sender.positionWindow = sender.positionWindow++ % Frame.MAX_SEQ_NUM;
-                		
+                		sender.positionWindow++;
+                                System.out.println("Position window " + sender.positionWindow);
+
                 		if(sender.positionWindow == sender.unAckedFrame.length){
                 			sender.windowFull = true;
                 			
@@ -223,12 +223,14 @@ public class Sender {
 
                 	}
                 	else{
-                		//Si on a fait un tour complet de la fenêtre sans avoir reçu de confirmation
+                		//Si on a fait un tour complet de la fenï¿½tre sans avoir reï¿½u de confirmation
                 		if(sender.positionWindow == sender.infoFrames.get(sender.frameToSend).getNum()) { 
-                			sender.startTimer(); //On démarre le chrono. Si on n'a pas reçu la prochaine frame avant la fin du chrono, on réenvoit toute la fenêtre.
-                		}
+                			sender.startTimer();//On dï¿½marre le chrono. Si on n'a pas reï¿½u la prochaine frame avant la fin du chrono, on rï¿½envoit toute la fenï¿½tre.
+                		break;
+                                }
+                		
                 	}
-                	break;
+                	
                 }
                
                 Frame closureFrame = Frame.createClosureFrame();
