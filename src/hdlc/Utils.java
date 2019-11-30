@@ -2,9 +2,12 @@ package hdlc;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 public class Utils {
     final public static String binaryRegex = "^\\b[01]+\\b$";
+    final public static int[] CCITT = {1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1};
+    final public static String CCITTString = "0000000000000000";
     
     // Vérifie si les arguments args.length passés en paramètres sont valides
     public static boolean validateSenderArgs(String[] args) {
@@ -155,6 +158,39 @@ public class Utils {
         return (verif);
 
     }
+    
+    //Permet d'obtenir le résultat d'une division polynomiale entre deux nombre binaire
+//Utilisé pour créer le CRC (sender) et pour vérifier si des erreurs se sont intégré (receiver)
+    public static int[] checkSum(int[] data, int[] checksum) {
+
+        int[] result = Arrays.copyOfRange(data, 0, checksum.length);
+
+        for (int i = 0; i < (data.length - checksum.length); i++) {
+
+            if (result[0] == 1) {
+                for (int j = 1; j < checksum.length; j++) {
+                    result[j - 1] = (result[j] ^ checksum[j]);
+                }
+                result[result.length - 1] = data[i + checksum.length];
+
+            } else {
+                for (int j = 1; j < result.length; j++) {
+                    result[j - 1] = result[j];
+                }
+                result[result.length - 1] = data[i + checksum.length];
+
+            }
+        }
+
+        if (result[0] == 1) {
+            for (int j = 0; j < checksum.length; j++) {
+                result[j] = (result[j] ^ checksum[j]);
+            }
+        }
+
+        return(result);
+
+    }
 
     public static String calculateCRC(Frame frame){
 
@@ -172,16 +208,39 @@ public class Utils {
         String stringData = transformBinToString(binData);
         data += stringData;
 
-        data += "0000000000000000"; //Ajout du numéro de zéro de CRC-CCITT
+        data += CCITTString; //Ajout du numéro de zéro de CRC-CCITT
 
         int[] intData = transformStringToBinArray(data);
 
-        int[] checksum = frame.checkSum(intData, Frame.CCITT);
+        int[] checksum = checkSum(intData, CCITT);
 
         String crcString = transformBinArrayToString(checksum);
 
         return(crcString);
 
+    }
+    
+    public static int[] calculateForCRC(Frame frame){
+        String data  = "";
+
+        StringBuilder binType = transformLatinToBin(frame.getType() + "");
+        String stringType = transformBinToString(binType);
+        data += stringType;
+
+        StringBuilder binNum = transformLatinToBin(frame.getNum() + "");
+        String stringNum = transformBinToString(binNum);
+        data += stringNum;
+
+        StringBuilder binData = transformLatinToBin(frame.getData());
+        String stringData = transformBinToString(binData);
+        data += stringData;
+        
+        data += frame.getCRC();
+        
+        int[] binArray = transformStringToBinArray(data);
+        int[] result = checkSum(binArray, CCITT);
+        
+        return(result);
     }
     
 }
