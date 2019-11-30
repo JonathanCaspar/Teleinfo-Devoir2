@@ -51,42 +51,53 @@ public class Receiver {
                 String request = this.dIn.readUTF();
                 System.out.println("");
                 System.out.println("Message received: " + request);
-
+                
                 Frame frame = Frame.parseFrame(request);
-                //System.out.println("Re-encoded frame : " + frame.encode()); 
+                
+                //Introduction volontaire d'une erreur dans data d'une trame dinformation :
+                if(frame.getType() == FrameType.I){
+                    String oldData = frame.getData();
+                    frame.binData("xx");
+                    System.out.println("!!! Introduction d'une erreur : data = '" + oldData + "' devient data = 'xx'");
+                }
+                
                 System.out.println("Frame extracted: " + frame.toString());
+                
+                if (frame.checkValidity()) {
+                    System.out.println("Frame received is valid!");
+                        
+                    // Adapte la réponse selon le type de paquet recu
+                    switch (frame.getType()) {
+                        case I:
 
-                // Adapte la réponse selon le type de paquet recu
-                switch (frame.getType()) {
-                    case I:
-                        String crc = frame.calculateCRC();
-                        int[] crcArray = Utils.transformStringToBinArray(crc);
-                        boolean verification = Frame.verification(frame.calculateForCRC());
-                        if (verification) {
-                        }
-                        break;
 
-                    case C:
-                        System.out.println("---- RECU UNE DEMANDE DE CONNEXION ! ----");
-                        break;
+                            break;
 
-                    case A:
-                        break;
+                        case C:
+                            System.out.println("---- RECU UNE DEMANDE DE CONNEXION ! ----");
+                            break;
 
-                    case R:
-                        break;
+                        case A:
+                            break;
 
-                    case F:
-                        System.out.println("---- RECU UNE DEMANDE DE FERMETURE DE CONNEXION ! ----");
-                        done = true;
-                        break;
+                        case R:
+                            break;
 
-                    case P:
-                        break;
+                        case F:
+                            System.out.println("---- RECU UNE DEMANDE DE FERMETURE DE CONNEXION ! ----");
+                            done = true;
+                            break;
 
-                    default:
-                        done = true;
-                        break;
+                        case P:
+                            break;
+
+                        default:
+                            done = true;
+                            break;
+                    }
+                }
+                else{
+                    System.out.println("Frame received is corrupted!");
                 }
 
             } catch (EOFException e) {

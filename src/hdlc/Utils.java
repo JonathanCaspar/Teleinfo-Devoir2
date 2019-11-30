@@ -150,5 +150,12 @@ public class Utils {
 
         return (s);
     }
+    
+    public static boolean checkIntArrayOnlyZero(int[] array){
+        for(int i = 0; i < array.length; i++){
+            if(array[i] == 1) return false;
+        }
+        return true;
+    }
 
 }

@@ -1,1 +1,1 @@
-The Java FileReader class, java.io.FileReader makes it possible to read the contents of a file as a stream of characters. It works much like the FileInputStream except the FileInputStream reads bytes, whereas the FileReader reads characters. The FileReader is intended to read text, in other words. One character may correspond to one or more bytes depending on the character encoding scheme.
+The Java FileReader class
