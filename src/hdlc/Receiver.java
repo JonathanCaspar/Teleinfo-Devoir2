@@ -4,12 +4,13 @@ import java.io.*;
 import static java.lang.System.exit;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Receiver {
 
-    private Frame[] receivedFrames;
+    private ArrayList<Frame> receivedFrames;
 
     private final int port;
 
@@ -36,6 +37,7 @@ public class Receiver {
         try {
             this.socket = this.sSocket.accept();
             this.dIn = new DataInputStream(this.socket.getInputStream());
+            this.dOut = new DataOutputStream(this.socket.getOutputStream());
             return true;
         } catch (IOException ex) {
             Logger.getLogger(Receiver.class.getName()).log(Level.SEVERE, null, ex);
@@ -52,19 +54,21 @@ public class Receiver {
                 this.dOut.flush(); // On envoie
 
             } catch (IOException ex) {
-                Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Receiver.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
 
     public void listenForFrames() {
         boolean done = false;
+        int expectedNum = 0;
+        
         while (!done) {
 
             // On crée une Trame à partir de la suite reçue et on lit le type de message
             try {
                 String request = this.dIn.readUTF();
-                System.out.println("\nMessage received: " + request);
+                //System.out.println("\nMessage received: " + request);
 
                 Frame frame = Frame.parseFrame(request);
 
@@ -75,30 +79,46 @@ public class Receiver {
                     System.out.println("!!! Introduction d'une erreur : data = '" + oldData + "' devient data = 'xx'");
                 }*/
 
-                System.out.println("Frame extracted: " + frame.toString());
+                System.out.println("------- Frame received: " + frame.toString());
 
-
+                // Vérifie si la trame n'est pas corrompue
                 if (frame.checkValidity()) {
-                    System.out.println("Frame received is valid!");
-
+                    
                     // Adapte la réponse selon le type de paquet recu
                     switch (frame.getType()) {
+                        
                         case I:
+                            // Le numéro recu est celui attendu
+                            if(expectedNum == frame.getNum()){
+                                System.out.print("Reception du message : "+ frame.getData());
+                                this.receivedFrames.add(frame);
+                                
+                                expectedNum = (expectedNum + 1) % Frame.MAX_SEQ_NUM;
 
+                                send(Frame.createAckFrame(expectedNum));
+                            }
+                            
                             break;
 
                         case C:
-                            System.out.println("---- RECU UNE DEMANDE DE CONNEXION ! ----");
+                            System.out.print("Demande de connexion recu avec ");
+                            
+                            if(frame.getNum() == 0){
+                                System.out.println("le protocole Go-Back-N.");
+                                System.out.println("Autorisé : Envoi d'une trame d'acquittement");
+                                send(Frame.createAckFrame(0));
+                            }
+                            else{
+                                System.out.println("un protocole inconnu.");
+                                System.out.println("Refusé : Envoi d'une trame de refus.");
+                                send(Frame.createRejFrame(0));
+                                System.out.println("Arrêt du serveur.");
+                                done = true;
+                            }
                             break;
-
-                        case A:
-                            break;
-
-                        case R:
-                            break;
-
+                            
                         case F:
-                            System.out.println("---- RECU UNE DEMANDE DE FERMETURE DE CONNEXION ! ----");
+                            System.out.println("RECU UNE DEMANDE DE FERMETURE DE CONNEXION !");
                             done = true;
                             break;
 
@@ -109,8 +129,9 @@ public class Receiver {
                             done = true;
                             break;
                     }
+                    
                 } else {
-                    System.out.println("Frame received is corrupted!");
+                    System.out.println("Frame " + frame.getNum() + " received is corrupted!");
                 }
 
             } catch (EOFException e) {
@@ -124,6 +145,7 @@ public class Receiver {
     public void disconnectClient() {
         try {
             this.dIn.close();
+            this.dOut.close();
         } catch (IOException ex) {
             Logger.getLogger(Receiver.class.getName()).log(Level.SEVERE, null, ex);
         }
