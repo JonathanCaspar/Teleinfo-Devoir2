@@ -27,6 +27,9 @@ public class Sender {
     private DataOutputStream dOut;
     private Reader fileReader;
 
+    Frame[] ackedFrame = new Frame[8]; //Pour conserver les ack recus
+
+   
     private Timer timer;
     private boolean windowFull;
     private int frameToSend;
@@ -149,9 +152,7 @@ public class Sender {
     }
 
     public void generateFrameAndSend(int frameToSend) {
-
         this.send(this.infoFrames.get(frameToSend));
-
     }
 
     public void startTimer() {
@@ -194,7 +195,7 @@ public class Sender {
                 sender.unAckedFrame = new int[8];
                 sender.positionWindow = 0;
                 
-                //Envoyer tant qu'il y a des frames à envoyer
+                /*//Envoyer tant qu'il y a des frames à envoyer
                 while (true) {
 
                     if (!sender.windowFull) { //envoyer tant qu'il y a de la place dans la fenêtre
@@ -205,21 +206,33 @@ public class Sender {
                         sender.positionWindow++;
                         System.out.println("Position window " + sender.positionWindow);
 
-                        if (sender.positionWindow == sender.unAckedFrame.length) {
-                            sender.windowFull = true;
+                while(true){
 
-                        }
+                	if(!sender.windowFull){ //envoyer tant qu'il y a de la place dans la fenêtre
 
-                    } else {
-                        //Si on a fait un tour complet de la fen�tre sans avoir re�u de confirmation
-                        if (sender.positionWindow == sender.infoFrames.get(sender.frameToSend).getNum()) {
-                            sender.startTimer();//On d�marre le chrono. Si on n'a pas re�u la prochaine frame avant la fin du chrono, on r�envoit toute la fen�tre.
-                            break;
-                        }
+                		sender.generateFrameAndSend(sender.frameToSend);
+                    	
+                		sender.unAckedFrame[sender.positionWindow] = sender.frameToSend++; //Conserve les éléments envoyé dans la fenêtre
 
-                    }
+                		if(sender.positionWindow == sender.unAckedFrame.length){
+                                    //***Vérifier si dans l'array ackedframe on retrouve le Ack du de la frame à la position PositionWindow
+                			sender.windowFull = true;
+                			
+                		}
 
-                }
+                	}
+                	else{
+                		//Si on a fait un tour complet de la fen�tre sans avoir re�u de confirmation
+                		if(sender.positionWindow == sender.infoFrames.get(sender.frameToSend).getNum()) {
+                                    
+                			sender.startTimer();//On d�marre le chrono. Si on n'a pas re�u la prochaine frame avant la fin du chrono, on r�envoit toute la fen�tre.
+                		break;
+                                }
+                		
+                	}
+                	
+
+                }*/
 
                 // Demande de fermeture
                 Frame closureFrame = Frame.createClosureFrame();

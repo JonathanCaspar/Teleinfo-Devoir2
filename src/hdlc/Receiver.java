@@ -16,6 +16,7 @@ public class Receiver {
     private ServerSocket sSocket;
     private Socket socket;
     private DataInputStream dIn;
+    private DataOutputStream dOut;
 
     public Receiver(int port) {
         this.port = port;
@@ -41,6 +42,20 @@ public class Receiver {
             return false;
         }
     }
+    
+    public void send(Frame frame) {
+        if (frame != null && this.socket != null && this.socket.isConnected()) {
+            
+            String binaryFrame = frame.encode();
+            try {
+                this.dOut.writeUTF(binaryFrame);
+                this.dOut.flush(); // On envoie
+
+            } catch (IOException ex) {
+                Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
 
     public void listenForFrames() {
         boolean done = false;
@@ -61,6 +76,7 @@ public class Receiver {
                 }*/
 
                 System.out.println("Frame extracted: " + frame.toString());
+
 
                 if (frame.checkValidity()) {
                     System.out.println("Frame received is valid!");
