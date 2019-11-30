@@ -213,8 +213,9 @@ System.out.println(crcString);
                 		sender.generateFrameAndSend(sender.frameToSend, sender);
                     	
                 		sender.unAckedFrame[sender.positionWindow] = sender.frameToSend++; //Conserve les éléments envoyé dans la fenêtre
-                		sender.positionWindow = sender.positionWindow++ % Frame.MAX_SEQ_NUM;
-                		
+                		sender.positionWindow++;
+                                System.out.println("Position window " + sender.positionWindow);
+
                 		if(sender.positionWindow == sender.unAckedFrame.length){
                 			sender.windowFull = true;
                 			

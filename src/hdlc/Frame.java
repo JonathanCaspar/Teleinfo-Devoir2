@@ -116,7 +116,6 @@ public class Frame {
 
         //-- Extraction de Data
         String data_ = rawFrame.substring(24, frameLength - 24);
-        System.out.println(data_.length());
         String latinData_ = Utils.transformBinToLatin(data_);
         
         //-- Extraction de Crc
