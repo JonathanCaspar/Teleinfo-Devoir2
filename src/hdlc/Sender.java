@@ -26,6 +26,8 @@ public class Sender {
     private Socket socket;
     private DataOutputStream dOut;
     private Reader fileReader;
+    Frame[] ackedFrame = new Frame[8]; //Pour conserver les ack recus
+
     
     private Timer timer;
 	private boolean windowFull;
@@ -213,10 +215,9 @@ System.out.println(crcString);
                 		sender.generateFrameAndSend(sender.frameToSend, sender);
                     	
                 		sender.unAckedFrame[sender.positionWindow] = sender.frameToSend++; //Conserve les éléments envoyé dans la fenêtre
-                		sender.positionWindow++;
-                                System.out.println("Position window " + sender.positionWindow);
 
                 		if(sender.positionWindow == sender.unAckedFrame.length){
+                                    //***Vérifier si dans l'array ackedframe on retrouve le Ack du de la frame à la position PositionWindow
                 			sender.windowFull = true;
                 			
                 		}
@@ -224,7 +225,8 @@ System.out.println(crcString);
                 	}
                 	else{
                 		//Si on a fait un tour complet de la fen�tre sans avoir re�u de confirmation
-                		if(sender.positionWindow == sender.infoFrames.get(sender.frameToSend).getNum()) { 
+                		if(sender.positionWindow == sender.infoFrames.get(sender.frameToSend).getNum()) {
+                                    
                 			sender.startTimer();//On d�marre le chrono. Si on n'a pas re�u la prochaine frame avant la fin du chrono, on r�envoit toute la fen�tre.
                 		break;
                                 }

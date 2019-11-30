@@ -17,6 +17,7 @@ public class Receiver {
     private ServerSocket sSocket;
     private Socket socket;
     private DataInputStream dIn;
+    private DataOutputStream dOut;
 
     public Receiver(int port) {
         this.port = port;
@@ -42,6 +43,20 @@ public class Receiver {
             return false;
         }
     }
+    
+    public void send(Frame frame) {
+        if (frame != null && this.socket != null && this.socket.isConnected()) {
+            
+            String binaryFrame = frame.encode();
+            try {
+                this.dOut.writeUTF(binaryFrame);
+                this.dOut.flush(); // On envoie
+
+            } catch (IOException ex) {
+                Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
 
     public void listenForFrames() {
         boolean done = false;
@@ -64,6 +79,8 @@ public class Receiver {
                         int[] crcArray = Utils.transformStringToBinArray(crc);
                         boolean verification = Utils.verification(Utils.calculateForCRC(frame));
                         if(verification){
+                            //Envoyer une un frame de type A
+                            Frame frameACK = new Frame(FrameType.A, frame.getNum(), "0000000000000000", "0"  );
                         }
                         break;
                         
