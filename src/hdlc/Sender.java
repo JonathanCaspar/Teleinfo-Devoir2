@@ -81,12 +81,12 @@ public class Sender {
                 // On crée la trame d'Information (FrameType.I)
                 // en y insérant la section de caractère lue dans le fichier
                 Frame frame = Frame.createInfoFrame(numSeq, String.valueOf(section));
-                
+
                 // Débuggage
                 System.out.println("");
                 System.out.println("Frame created = " + frame.toString());
                 System.out.println("Binary form   = " + frame.encode());
-                
+
                 // On ajoute la trame créée à notre ArrayList
                 this.infoFrames.add(frame);
 
@@ -188,12 +188,12 @@ public class Sender {
                 // On fait une demande de connexion pour transmission de données
                 Frame connectionFrame = Frame.createConnectionFrame(sender.getProtocol());
                 sender.send(connectionFrame);
-                
+
                 sender.windowFull = false;
                 sender.frameToSend = 0;
                 sender.unAckedFrame = new int[8];
                 sender.positionWindow = 0;
-                
+
                 sender.generateFrameAndSend(0);
                 /*//Envoyer tant qu'il y a des frames � envoyer
                 while (true) {

@@ -49,27 +49,25 @@ public class Receiver {
             // On crée une Trame à partir de la suite reçue et on lit le type de message
             try {
                 String request = this.dIn.readUTF();
-                System.out.println("");
-                System.out.println("Message received: " + request);
-                
+                System.out.println("\nMessage received: " + request);
+
                 Frame frame = Frame.parseFrame(request);
-                
+
                 //Introduction volontaire d'une erreur dans data d'une trame dinformation :
-                if(frame.getType() == FrameType.I){
+                if (frame.getType() == FrameType.I) {
                     String oldData = frame.getData();
-                    frame.binData("xx");
+                    frame.setData("xx");
                     System.out.println("!!! Introduction d'une erreur : data = '" + oldData + "' devient data = 'xx'");
                 }
-                
+
                 System.out.println("Frame extracted: " + frame.toString());
-                
+
                 if (frame.checkValidity()) {
                     System.out.println("Frame received is valid!");
-                        
+
                     // Adapte la réponse selon le type de paquet recu
                     switch (frame.getType()) {
                         case I:
-
 
                             break;
 
@@ -95,8 +93,7 @@ public class Receiver {
                             done = true;
                             break;
                     }
-                }
-                else{
+                } else {
                     System.out.println("Frame received is corrupted!");
                 }
 

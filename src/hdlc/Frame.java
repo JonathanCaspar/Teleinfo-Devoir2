@@ -7,27 +7,26 @@ import static hdlc.Utils.transformBinToString;
 import static hdlc.Utils.transformLatinToBin;
 import static hdlc.Utils.transformStringToBinArray;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 
 public class Frame {
 
     final public static int MAX_SEQ_NUM = 8; // car 3 bits
     final public static int DATA_MAX_SIZE = 2; // 10 caractères
-    
+
     final private String FLAG = "01111110";
     private FrameType type;
     private int num;
     private String data;
     private String crc;
 
-    public Frame(FrameType type, int num, String data) {
+    private Frame(FrameType type, int num, String data) {
         this.type = type;
         this.num = num;
         this.data = data;
         this.crc = this.computeCRC();
     }
-    
-    public Frame(FrameType type, int num, String data, String crc) {
+
+    private Frame(FrameType type, int num, String data, String crc) {
         this.type = type;
         this.num = num;
         this.data = data;
@@ -37,27 +36,23 @@ public class Frame {
     public FrameType getType() {
         return (this.type != null) ? this.type : null;
     }
-    
+
     public int getNum() {
         return (this.num);
     }
-    
+
     public String getData() {
         return (this.data);
     }
-    
+
     public String getCRC() {
         return (this.crc);
     }
 
-    public void setCRC(String crc) {
-        this.crc = crc;
+    public void setData(String data) {
+        this.data = data;
     }
-    
-    public void binData(String dataLatin){
-        this.data = dataLatin;
-    }
-    
+
     // Retourne une version affichable de la trame
     @Override
     public String toString() {
@@ -66,40 +61,43 @@ public class Frame {
 
     // Retourne une chaine de bits (en String) représentant la trame
     public String encode() {
-        String stuffedBinType = Utils.bitStuff( Integer.toBinaryString(this.type.ordinal()), 8); // valeur binaire de FrameType
-        String stuffedBinNum  = Utils.bitStuff( Integer.toBinaryString(this.num), 8);
-        String stuffedBinCrc  = Utils.bitStuff( this.crc, 16);
+        String stuffedBinType = Utils.bitStuff(Integer.toBinaryString(this.type.ordinal()), 8); // valeur binaire de FrameType
+        String stuffedBinNum = Utils.bitStuff(Integer.toBinaryString(this.num), 8);
+        String stuffedBinCrc = Utils.bitStuff(this.crc, 16);
         StringBuilder binData = Utils.transformLatinToBin(this.data);
-        
+
         String binDataStr = Utils.transformBinToString(binData);
-        //System.out.println(this.data + " devient : " + binDataStr);
-        
-        
+
         return this.FLAG + stuffedBinType + stuffedBinNum + binDataStr + stuffedBinCrc + this.FLAG;
     }
-    
-    public boolean isClosureFrame(){
+
+    // Indique si la trame est de type Fermeture
+    public boolean isClosureFrame() {
         return this.type == FrameType.F;
     }
-    
-    public static Frame createInfoFrame(int num, String data){
+
+    // Retourne une trame d'information
+    public static Frame createInfoFrame(int num, String data) {
         return new Frame(FrameType.I, num, data);
     }
-    
-    public static Frame createConnectionFrame(int protocol){
-        return new Frame(FrameType.C, protocol,"0");
-    }
-    
-    public static Frame createClosureFrame(){
-        return new Frame(FrameType.F, 0,"0");
+
+    // Retourne une trame de connexion
+    public static Frame createConnectionFrame(int protocol) {
+        return new Frame(FrameType.C, protocol, "0");
     }
 
+    // Retourne un trame de fermeture
+    public static Frame createClosureFrame() {
+        return new Frame(FrameType.F, 0, "0");
+    }
 
     // Convertit une chaine de bits (en String) en un objet Frame
     public static Frame parseFrame(String rawFrame) throws UnsupportedEncodingException {
         // Vérification
         int frameLength = rawFrame.length();
-        if (!rawFrame.matches(Utils.binaryRegex)) throw new IllegalArgumentException("Frame string must be binary numbers ONLY!");
+        if (!rawFrame.matches(Utils.binaryRegex)) {
+            throw new IllegalArgumentException("Frame string must be binary numbers ONLY!");
+        }
         if (frameLength < 48) {
             throw new IllegalArgumentException("Frame string is too short!"); //taille minimale requise (4 octets + 2 octets crc)
         }
@@ -129,15 +127,16 @@ public class Frame {
         //-- Extraction de Data
         String data_ = rawFrame.substring(24, frameLength - 24);
         String latinData_ = Utils.transformBinToLatin(data_);
-        
+
         //-- Extraction de Crc
         String crc_ = rawFrame.substring(frameLength - 24, frameLength - 8);
 
         return new Frame(type_, num_, latinData_, crc_);
 
     }
-    
-    
+
+    // Retourne le CRC calculé depuis les attributs type, num et data
+    // Fonction privée utilisé uniquement par les fonctions de création de Frame (createInfoFrame, etc ..)
     private String computeCRC() {
 
         String array = "";
@@ -158,7 +157,7 @@ public class Frame {
 
         int[] intArray = transformStringToBinArray(array);
 
-        int[] remainder = polynomialDivision(intArray, CCITT);
+        int[] remainder = Utils.polynomialDivision(intArray, CCITT);
 
         String crcString = transformBinArrayToString(remainder);
 
@@ -181,46 +180,13 @@ public class Frame {
         StringBuilder binData = transformLatinToBin(this.getData());
         String stringData = transformBinToString(binData);
         data += stringData;
-        
+
         data += this.getCRC();
 
         int[] binArray = transformStringToBinArray(data);
-        int[] result = polynomialDivision(binArray, CCITT);
+        int[] result = Utils.polynomialDivision(binArray, CCITT);
 
         // Si le résultat contient uniquement des 0 alors la trame est valide
         return Utils.checkIntArrayOnlyZero(result);
-    }
-    
-    //Permet d'obtenir le résultat d'une division polynomiale entre deux nombres binaires
-    //Utilisé pour vérifier si des erreurs de transmission se sont introduites dans une transmission
-    public static int[] polynomialDivision(int[] array, int[] checksum) {
-
-        int[] result = Arrays.copyOfRange(array, 0, checksum.length);
-
-        for (int i = 0; i < (array.length - checksum.length); i++) {
-
-            if (result[0] == 1) {
-                for (int j = 1; j < checksum.length; j++) {
-                    result[j - 1] = (result[j] ^ checksum[j]);
-                }
-                result[result.length - 1] = array[i + checksum.length];
-
-            } else {
-                for (int j = 1; j < result.length; j++) {
-                    result[j - 1] = result[j];
-                }
-                result[result.length - 1] = array[i + checksum.length];
-
-            }
-        }
-
-        if (result[0] == 1) {
-            for (int j = 0; j < checksum.length; j++) {
-                result[j] = (result[j] ^ checksum[j]);
-            }
-        }
-
-        return (Arrays.copyOfRange(result, 1, checksum.length));
-
     }
 }
