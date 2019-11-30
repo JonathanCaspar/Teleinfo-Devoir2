@@ -188,7 +188,7 @@ public class Utils {
             }
         }
 
-        return(result);
+        return(Arrays.copyOfRange(result, 1, checksum.length));
 
     }
 

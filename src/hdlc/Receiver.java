@@ -64,7 +64,6 @@ public class Receiver {
                         int[] crcArray = Utils.transformStringToBinArray(crc);
                         boolean verification = Utils.verification(Utils.calculateForCRC(frame));
                         if(verification){
-                        System.out.println("It's ok");
                         }
                         break;
                         
