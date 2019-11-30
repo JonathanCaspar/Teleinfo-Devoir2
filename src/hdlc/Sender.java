@@ -193,9 +193,8 @@ public class Sender {
                 sender.frameToSend = 0;
                 sender.unAckedFrame = new int[8];
                 sender.positionWindow = 0;
-
-                sender.generateFrameAndSend(0);
-                /*//Envoyer tant qu'il y a des frames � envoyer
+                
+                //Envoyer tant qu'il y a des frames à envoyer
                 while (true) {
 
                     if (!sender.windowFull) { //envoyer tant qu'il y a de la place dans la fenêtre
@@ -220,8 +219,9 @@ public class Sender {
 
                     }
 
-                }*/
+                }
 
+                // Demande de fermeture
                 Frame closureFrame = Frame.createClosureFrame();
                 sender.send(closureFrame);
 

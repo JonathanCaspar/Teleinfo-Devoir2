@@ -53,12 +53,12 @@ public class Receiver {
 
                 Frame frame = Frame.parseFrame(request);
 
-                //Introduction volontaire d'une erreur dans data d'une trame dinformation :
+                /*//Introduction volontaire d'une erreur dans data d'une trame dinformation :
                 if (frame.getType() == FrameType.I) {
                     String oldData = frame.getData();
                     frame.setData("xx");
                     System.out.println("!!! Introduction d'une erreur : data = '" + oldData + "' devient data = 'xx'");
-                }
+                }*/
 
                 System.out.println("Frame extracted: " + frame.toString());
 
