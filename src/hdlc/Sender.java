@@ -237,6 +237,7 @@ public class Sender {
                     } else {
                         //Si on a fait un tour complet de la fen�tre sans avoir re�u de confirmation
                         if (sender.positionWindow == sender.infoFrames.get(sender.frameToSend).getNum()) {
+                            response = sender.receive();
 
                             sender.startTimer();//On d�marre le chrono. Si on n'a pas re�u la prochaine frame avant la fin du chrono, on r�envoit toute la fen�tre.
                             break;
