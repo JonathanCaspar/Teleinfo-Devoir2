@@ -46,6 +46,7 @@ public class Receiver {
     }
     
     public void send(Frame frame) {
+        System.out.println("About to send : " + frame.toString());
         if (frame != null && this.socket != null && this.socket.isConnected()) {
             
             String binaryFrame = frame.encode();
@@ -61,6 +62,7 @@ public class Receiver {
 
     public void listenForFrames() {
         boolean done = false;
+        receivedFrames = new ArrayList<Frame>();
         int expectedNum = 0;
         
         while (!done) {
@@ -90,12 +92,12 @@ public class Receiver {
                         case I:
                             // Le numéro recu est celui attendu
                             if(expectedNum == frame.getNum()){
-                                System.out.print("Reception du message : "+ frame.getData());
+                                System.out.println("Reception du message : "+ frame.getData());
                                 this.receivedFrames.add(frame);
                                 
                                 expectedNum = (expectedNum + 1) % Frame.MAX_SEQ_NUM;
 
-                                send(Frame.createAckFrame(expectedNum));
+                                //send(Frame.createAckFrame(expectedNum));
                             }
                             
                             break;
