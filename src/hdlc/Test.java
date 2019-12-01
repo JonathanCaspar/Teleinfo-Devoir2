@@ -8,7 +8,7 @@ import java.util.Random;
 
 /**
  *
- * @author Utilisateur
+ * @author Alexandre Dufour et Jonathan Caspar
  */
 public class Test {
     
@@ -41,13 +41,5 @@ public class Test {
     
     }
     
-    public static void main(String[] args){
-        Test t = new Test();
-        String frame = "011111101100011000000010110001010110011000001110110001110101010110011000101001";
-
-        System.out.println(frame);
-        System.out.println(t.destroyFrame(frame));
-
-        
-    }    
+    
 }
