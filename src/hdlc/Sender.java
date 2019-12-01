@@ -57,7 +57,7 @@ public class Sender {
     // Envoie un Frame via un socket fourni en paramètre
     public void send(Frame frame) {
         if (frame != null && this.socket != null && this.socket.isConnected()) {
-
+            System.out.println("Trame envoyée : " + frame.toString());
             String binaryFrame = frame.encode();
             try {
                 this.dOut.writeUTF(binaryFrame);
@@ -69,7 +69,7 @@ public class Sender {
         }
     }
 
-    // Attend la reception d'un paquet de Receiver
+    // Attend la reception d'un Frame de Receiver
     public Frame receive() {
         try {
             while (this.dIn.available() != 0); // bloque jusqu'à recevoir des données
@@ -165,15 +165,8 @@ public class Sender {
         }
     }
 
-    /*public void sendInfoFrame(int frameToSend) {
-        this.send(this.infoFrames.get(frameToSend));
-    }*/
     public ArrayList<Frame> getInfoFrames() {
         return this.infoFrames;
-    }
-
-    public void setSoTimeout(int timer) throws SocketException {
-        this.socket.setSoTimeout(timer);
     }
 
     public void startTimer() {
@@ -193,8 +186,6 @@ public class Sender {
 
     public static void main(String[] args) throws Exception {
 
-        ArrayList<Frame> sentFrame = new ArrayList<Frame>(); //Pour conserver les ack recus
-
         // On fait une validation des arguments
         if (!Utils.validateSenderArgs(args)) {
             System.out.println("Les arguments fournis n'ont pas le format valide ('<Nom_Machine> <Numero_Port> <Nom_fichier> <0>')");
@@ -212,50 +203,49 @@ public class Sender {
                 sender.send(connectionFrame);
 
                 // Attend la réponse du destinataire
-                System.out.println("Waiting for response for connection request...");
+                System.out.println("En attente d'une réponse pour la demande de transmission...");
                 Frame response = sender.receive();
-
-                System.out.println("Received frame : " + response.toString());
-
-                ArrayList<Frame> infoFrames = sender.getInfoFrames();
-
-                // 2) Envoyer tant qu'il y a des frames à envoyer
                 
-                for(int i = 0; i < infoFrames.size(); i++){
-                    System.out.println("Sending frame : " + infoFrames.get(i));
-                    sender.send(infoFrames.get(i));
+                // Si la réponse est OUI
+                // 2) Envoyer les frames
+                if (response.getType() == FrameType.A) {
+                    System.out.println("Demande de transmission acceptée");
+                    ArrayList<Frame> infoFrames = sender.getInfoFrames();
+
+                    for (int i = 0; i < infoFrames.size(); i++) {
+                        sender.send(infoFrames.get(i));
+                    }
                 }
-                
+                else System.out.println("Demande de transmission refusée");
+
+                // Tentative d'implémentation de Go-back-N côté Sender avec https://github.com/tomersimis/Go-Back-N/blob/master/Sender.java
+                // mais infructueux car numérotation de séquence circulaire (modulo) dans notre cas
                 /*while (true) {
+                    
                     final int WINDOW_SIZE = 2;
-                    // Time (ms) before REsending all the non-acked packets
                     final int TIMER = 30;
 
-                    // Sequence number of the last packet sent (rcvbase)
+                    // Numero de séquence de la derniere trame envoyée
                     int lastSent = 0;
 
-                    // Sequence number of the last acked packet
+                    // Numéro de séquence de la derniere trame acquittée
                     int waitingForAck = 0;
 
-                    // Last packet sequence number
+                    // Dernier numéro de trame
                     int lastSeq = 0;
                     int infoFrameIndex = 0;
-                    // Sending loop
-                    while (lastSent - waitingForAck < WINDOW_SIZE && lastSent < lastSeq) {
 
-                        System.out.println("Sending packet with sequence number " + lastSent);
+                    while (lastSent - waitingForAck < WINDOW_SIZE && lastSent < lastSeq) {
                         Frame frame = infoFrames.get(infoFrameIndex);
                         // Add packet to the sent list
                         sentFrame.add(frame);
 
-                        // Send packet
                         sender.send(frame);
 
-                        // Increase the last sent
                         lastSent = (lastSent + 1) % Frame.MAX_SEQ_NUM;
                         infoFrameIndex++;
 
-                    } // End of sending while
+                    }
 
                     // Byte array for the ACK sent by the receiver
                     byte[] ackBytes = new byte[40];
@@ -290,7 +280,6 @@ public class Sender {
                     }
 
                 }*/
-
                 // 3) Demande de fermeture
                 Frame closureFrame = Frame.createClosureFrame();
                 sender.send(closureFrame);

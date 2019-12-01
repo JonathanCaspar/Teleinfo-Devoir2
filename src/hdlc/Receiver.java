@@ -44,11 +44,10 @@ public class Receiver {
             return false;
         }
     }
-    
+
     public void send(Frame frame) {
-        System.out.println("About to send : " + frame.toString());
         if (frame != null && this.socket != null && this.socket.isConnected()) {
-            
+
             String binaryFrame = frame.encode();
             try {
                 this.dOut.writeUTF(binaryFrame);
@@ -64,13 +63,12 @@ public class Receiver {
         boolean done = false;
         receivedFrames = new ArrayList<Frame>();
         int expectedNum = 0;
-        
+
         while (!done) {
 
             // On crée une Trame à partir de la suite reçue et on lit le type de message
             try {
                 String request = this.dIn.readUTF();
-                //System.out.println("\nMessage received: " + request);
 
                 Frame frame = Frame.parseFrame(request);
 
@@ -80,37 +78,36 @@ public class Receiver {
                     frame.setData("xx");
                     System.out.println("!!! Introduction d'une erreur : data = '" + oldData + "' devient data = 'xx'");
                 }*/
-
-                System.out.println("------- Frame received: " + frame.toString());
+                System.out.println("------- Trame recue : " + frame.toString());
 
                 // Vérifie si la trame n'est pas corrompue
                 if (frame.checkValidity()) {
-                    
+
                     // Adapte la réponse selon le type de paquet recu
                     switch (frame.getType()) {
-                        
+
                         case I:
                             // Le numéro recu est celui attendu
-                            if(expectedNum == frame.getNum()){
-                                System.out.println("Reception du message : "+ frame.getData());
+                            if (expectedNum == frame.getNum()) {
+                                System.out.println("Reception du message : " + frame.getData());
                                 this.receivedFrames.add(frame);
-                                
+
                                 expectedNum = (expectedNum + 1) % Frame.MAX_SEQ_NUM;
 
+                                // Renvoie d'un acquittement ACK (ne fonctionne pas) : semble surcharger le socket
                                 //send(Frame.createAckFrame(expectedNum));
                             }
-                            
+
                             break;
 
                         case C:
-                            System.out.print("Demande de connexion recu avec ");
-                            
-                            if(frame.getNum() == 0){
+                            System.out.print("Demande de connexion recue avec ");
+
+                            if (frame.getNum() == 0) {
                                 System.out.println("le protocole Go-Back-N.");
                                 System.out.println("Autorisé : Envoi d'une trame d'acquittement");
                                 send(Frame.createAckFrame(0));
-                            }
-                            else{
+                            } else {
                                 System.out.println("un protocole inconnu.");
                                 System.out.println("Refusé : Envoi d'une trame de refus.");
                                 send(Frame.createRejFrame(0));
@@ -118,9 +115,16 @@ public class Receiver {
                                 done = true;
                             }
                             break;
-                            
+
                         case F:
                             System.out.println("RECU UNE DEMANDE DE FERMETURE DE CONNEXION !");
+
+                            System.out.println("Affichage des données recues : ");
+                            for (Frame f : receivedFrames) {
+                                System.out.print(f.getData());
+                            }
+                            System.out.println("");
+
                             done = true;
                             break;
 
@@ -131,7 +135,7 @@ public class Receiver {
                             done = true;
                             break;
                     }
-                    
+
                 } else {
                     System.out.println("Frame " + frame.getNum() + " received is corrupted!");
                 }
@@ -163,11 +167,11 @@ public class Receiver {
 
     public static void main(String[] args) throws Exception {
 
-        if (false && !Utils.validateReceiverArgs(args)) { // 'false' pour test seulement
+        if (!Utils.validateReceiverArgs(args)) {
             System.out.println("Les arguments fournis n'ont pas le format valide ('<Numero_Port>')");
             exit(0);
         } else {
-            Receiver receiver = new Receiver(Integer.parseInt("82")); //'82' à remplacer par args[0]
+            Receiver receiver = new Receiver(Integer.parseInt(args[0]));
 
             if (receiver.initialize() && receiver.acceptClient()) {
 
