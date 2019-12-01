@@ -85,6 +85,16 @@ public class Frame {
     public static Frame createConnectionFrame(int protocol) {
         return new Frame(FrameType.C, protocol, "0");
     }
+    
+    // Retourne une trame d'acquittement (ACK)
+    public static Frame createAckFrame(int numToAck) {
+        return new Frame(FrameType.A, numToAck, "0");
+    }
+    
+    // Retourne une trame de rejet (REJ)
+    public static Frame createRejFrame(int numToRej) {
+        return new Frame(FrameType.R, numToRej, "0");
+    }
 
     // Retourne un trame de fermeture
     public static Frame createClosureFrame() {
